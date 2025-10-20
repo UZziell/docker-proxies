@@ -1,0 +1,12 @@
+services:
+  certbot:
+    image: certbot/dns-cloudflare
+    volumes:
+      - ./certbot-etc:/etc/letsencrypt
+      - ./cloudflare-secret.ini:/secrets/cloudflare-secret.ini:ro
+    command: certonly --dns-cloudflare --dns-cloudflare-credentials /secrets/cloudflare-secret.ini --dns-cloudflare-propagation-seconds 60 --preferred-challenges dns-01 --email ${CERTIFICATE_NOTIFICATIOIN_EMAIL} --agree-tos --no-eff-email -d *.${CERTIFICATE_DOMAIN} -d ${CERTIFICATE_DOMAIN}
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "1"
