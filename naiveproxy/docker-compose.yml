@@ -1,0 +1,46 @@
+services:
+  server:
+    image: pocat/naiveproxy:${NAIVEPROXY_SERVER_IMAGE_TAG:-latest}
+    container_name: naiveproxy-server
+    volumes:
+      - "./Caddyfile:/etc/naiveproxy/Caddyfile"
+      - "./storage:/root/.local/share/caddy"
+    environment:
+      NAIVEPROXY_DOMAIN: ${NAIVEPROXY_DOMAIN}
+      NAIVEPROXY_USERNAME: ${NAIVEPROXY_USERNAME}
+      NAIVEPROXY_PASSWORD: ${NAIVEPROXY_PASSWORD}
+      NAIVEPROXY_DECODY_URL: ${NAIVEPROXY_DECODY_URL}
+      NAIVEPROXY_DECODY_DOMAIN: ${NAIVEPROXY_DECODY_DOMAIN}
+      NAIVEPROXY_SSL_MAINTAINER_EMAIL: ${NAIVEPROXY_SSL_MAINTAINER_EMAIL}
+    command:
+      - /usr/bin/caddy
+      - run
+      - --config
+      - /etc/naiveproxy/Caddyfile
+    restart: always
+    # ports:
+    #   - 80:80
+    #   - 443:443
+    network_mode: host
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "1"
+
+  client:
+    image: ${IMAGE_REGISTRY}pocat/naiveproxy:${NAIVEPROXY_CLIENT_IMAGE_TAG:-client}
+    container_name: naiveproxy-client
+    command:
+      - /usr/bin/naive
+      - --log
+      - --listen=socks://0.0.0.0:1080
+      - --proxy=https://${NAIVEPROXY_USERNAME}:${NAIVEPROXY_PASSWORD}@${NAIVEPROXY_DOMAIN}
+    restart: always
+    ports:
+      - 127.0.0.1:8080:1080
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "1"

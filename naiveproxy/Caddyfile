@@ -1,0 +1,34 @@
+{
+	admin off
+	log {
+		output stdout
+		level INFO
+	}
+	servers :443 {
+		protocols h1 h2 h3
+	}
+
+	order forward_proxy before reverse_proxy
+}
+:443, {$NAIVEPROXY_DOMAIN} {
+	tls {$NAIVEPROXY_SSL_MAINTAINER_EMAIL}
+	forward_proxy {
+		basic_auth {$NAIVEPROXY_USERNAME} {$NAIVEPROXY_PASSWORD}
+		hide_ip
+		hide_via
+		probe_resistance
+	}
+	file_server {
+		root /var/www/html
+	}
+	@root {
+		path /
+	}
+	rewrite @root /ubuntu
+	reverse_proxy * {$NAIVEPROXY_DECODY_URL} {
+		header_up Host {$NAIVEPROXY_DECODY_DOMAIN}
+		header_up X-Forwarded-For {http.request.remote}
+		header_up X-Forwarded-Proto {http.request.scheme}
+		header_down Location {$NAIVEPROXY_DECODY_URL} https://{$NAIVEPROXY_DOMAIN}
+	}
+}
