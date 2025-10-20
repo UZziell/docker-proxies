@@ -1,0 +1,88 @@
+services:
+  server:
+    image: dnstt-server
+    build:
+      context: .
+      args:
+        SERVER_OR_CLIENT: server
+    container_name: dnstt-server
+    volumes:
+      - ./data:/var/lib/dnstt
+    environment:
+      DNSTT_PRIVATE_KEY_FILE: ${DNSTT_PRIVATE_KEY_FILE}
+      DNSTT_PUBLIC_KEY_FILE: ${DNSTT_PUBLIC_KEY_FILE}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    entrypoint: 
+      - "/bin/bash"
+      - "-c"
+      - |
+        set -euo pipefail
+
+        if [[ -f "$DNSTT_PRIVATE_KEY_FILE" && -f "$DNSTT_PUBLIC_KEY_FILE" ]]; then
+          echo "Found existing key pair."
+        else
+          echo "No key pair found! Generating new one..."
+          dnstt-server -gen-key -privkey-file "$DNSTT_PRIVATE_KEY_FILE" -pubkey-file "$DNSTT_PUBLIC_KEY_FILE"
+        fi
+
+        chmod 600 "$DNSTT_PRIVATE_KEY_FILE"
+        chmod 644 "$DNSTT_PUBLIC_KEY_FILE"
+        chown -R dnstt:dnstt /var/lib/dnstt
+
+        echo "Private key path: $DNSTT_PRIVATE_KEY_FILE"
+        echo "Public key path: $DNSTT_PUBLIC_KEY_FILE"
+        echo "Public key(needed for client):"
+        cat "$DNSTT_PUBLIC_KEY_FILE"
+
+        exec /usr/local/bin/dnstt-server \
+          -udp :${DNSTT_PORT:-53} \
+          -privkey-file ${DNSTT_PRIVATE_KEY_FILE} \
+          -mtu ${DNSTT_MTU:-1024} \
+          ${DNSTT_NAMESERVER} 127.0.0.1:${DNSTT_SERVER_TARGET_PORT}
+        
+    restart: always
+    # ports:
+    #   - "53:5300/udp"
+    network_mode: host
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "1"
+
+  client:
+    image: dnstt-client
+    build:
+      context: .
+      args:
+        SERVER_OR_CLIENT: client
+        IMAGE_REGISTRY: docker.arvancloud.ir/
+    container_name: dnstt-client
+    volumes:
+      - ./data:/var/lib/dnstt
+    environment:
+      DNSTT_PUBLIC_KEY_FILE: ${DNSTT_PUBLIC_KEY_FILE}
+    entrypoint: 
+      - "/bin/bash"
+      - "-c"
+      - |
+        set -euo pipefail
+
+        chmod 644 "$DNSTT_PUBLIC_KEY_FILE"
+        chown -R dnstt:dnstt /var/lib/dnstt
+        exec su-exec dnstt /usr/local/bin/dnstt-client \
+          -${DNSTT_CLIENT_MODE} ${DNSTT_CLIENT_RESOLVER_ADDRESS} \
+          -pubkey-file ${DNSTT_PUBLIC_KEY_FILE} \
+          -utls ${DNSTT_CLIENT_UTLS} \
+          ${DNSTT_NAMESERVER} 127.0.0.1:${DNSTT_CLIENT_LISTEN_PORT}
+
+    restart: always
+    # ports:
+    #   - 127.0.0.1:${DNSTT_CLIENT_LISTEN_PORT}:${DNSTT_CLIENT_LISTEN_PORT}
+    network_mode: host
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "1"
