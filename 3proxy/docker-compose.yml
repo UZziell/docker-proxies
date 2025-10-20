@@ -1,0 +1,14 @@
+services:
+  3proxy:
+    image: ghcr.io/tarampampam/3proxy:latest
+    ports:
+      - 3128:3128/tcp
+      - 1080:1080/tcp
+    environment:
+      - PROXY_LOGIN=${PROXY_LOGIN}
+      - PROXY_PASSWORD=${PROXY_PASSWORD}
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "1"
