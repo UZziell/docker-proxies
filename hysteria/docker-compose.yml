@@ -1,0 +1,20 @@
+services:
+  hysteria:
+    image: tobyxdd/hysteria
+    container_name: hysteria
+    restart: always
+    ports:
+      - 80:80/tcp
+      - 443:443/tcp
+      # - 443:443/udp
+    # network_mode: "host"
+    volumes:
+      - ../certbot/certbot-etc/:/etc/hysteria/certs/
+      - ./hysteria-server.yml:/etc/hysteria.yml
+    command: ["server", "-c", "/etc/hysteria.yml"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "1"
+
