@@ -1,0 +1,179 @@
+{
+    "log": {
+        "disabled": false,
+        "level": "info",
+        "timestamp": true
+    },
+    "dns": {
+        "final": "dns-remote",
+        "servers": [
+            {
+                "tag": "dns-direct",
+                "type": "udp",
+                "server": "1.1.1.1"
+            },
+            {
+                "tag": "dns-remote",
+                "type": "udp",
+                "server": "1.1.1.1"
+            },
+            {
+                "tag": "dns-local",
+                "type": "local",
+                "detour": "direct"
+            }
+        ],
+        "rules": [],
+        "strategy": "ipv4_only",
+        "disable_cache": false,
+        "disable_expire": false,
+        "independent_cache": false,
+        "reverse_mapping": false
+    },
+    "inbounds": [
+        {
+            "type": "vmess",
+            "tag": "vmess-in",
+            "listen": "::",
+            "listen_port": 80,
+            "tcp_multi_path": true,
+            "udp_fragment": true,
+            "users": [
+                {
+                    "name": "example-user",
+                    "uuid": "CHANGEME_TO_UUID",
+                    "alterId": 0
+                }
+            ],
+            "tls": {},
+            "multiplex": {
+                "enabled": true,
+                "padding": false,
+                "brutal": {
+                    "enabled": true,
+                    "up_mbps": 2,
+                    "down_mbps": 2
+                }
+            },
+            "transport": {}
+        },
+        {
+            "type": "direct",
+            "tag": "dns-in",
+            "listen": "127.0.0.1",
+            "listen_port": 6450,
+            "override_address": "1.1.1.1",
+            "override_port": 53
+        },
+        {
+            "type": "mixed",
+            "tag": "mixed-in",
+            "listen": "127.0.0.1",
+            "listen_port": 2080
+        }
+    ],
+    "outbounds": [
+        {
+            "type": "direct",
+            "tag": "direct"
+        },
+        {
+            "type": "socks",
+            "tag": "socks_naiveproxy",
+            "version": "5",
+            "network": "tcp",
+            "domain_strategy": "ipv4_only",
+            "server": "127.0.0.1",
+            "server_port": 8002
+        },
+        {
+            "type": "socks",
+            "tag": "socks_pingtunnel",
+            "version": "5",
+            "network": "tcp",
+            "domain_strategy": "ipv4_only",
+            "server": "127.0.0.1",
+            "server_port": 8001
+        },
+        {
+            "type": "socks",
+            "tag": "socks_dnstt",
+            "version": "5",
+            "domain_strategy": "ipv4_only",
+            "udp_over_tcp": false,
+            "server": "127.0.0.1",
+            "server_port": 8000,
+            "username": "sa",
+            "password": "CHANGEME"
+        }
+    ],
+    "route": {
+        "default_domain_resolver": {
+            "server": "dns-remote",
+            "strategy": "ipv4_only",
+            "disable_cache": false,
+            "rewrite_ttl": null,
+            "client_subnet": null
+        },
+        "auto_detect_interface": true,
+        "rules": [
+            {
+                "action": "sniff"
+            },
+            {
+                "protocol": "dns",
+                "action": "hijack-dns"
+            },
+            {
+                "inbound": "mixed-in",
+                "action": "resolve"
+            },
+            {
+                "inbound": "mixed-in",
+                "action": "sniff",
+                "timeout": "1s"
+            },
+            {
+                "rule_set": [
+                    "geosite-ir",
+                    "geoip-ir"
+                ],
+                "action": "reject"
+            },
+            {
+                "ip_is_private": true,
+                "outbound": "direct"
+            },
+            {
+                "source_ip_cidr": [
+                    "224.0.0.0/3",
+                    "ff00::/8"
+                ],
+                "ip_cidr": [
+                    "224.0.0.0/3",
+                    "ff00::/8"
+                ],
+                "action": "reject"
+            }
+        ],
+        "rule_set": [
+            {
+                "tag": "geosite-ir",
+                "type": "local",
+                "format": "binary",
+                "path": "geodata/geoip-ir.srs"
+            },
+            {
+                "tag": "geoip-ir",
+                "type": "local",
+                "format": "binary",
+                "path": "geodata/geosite-all.srs"
+            }
+        ]
+    },
+    "experimental": {
+        "cache_file": {
+            "enabled": true
+        }
+    }
+}

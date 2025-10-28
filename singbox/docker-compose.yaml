@@ -1,0 +1,37 @@
+services:
+  server:
+    image: ghcr.io/sagernet/sing-box:v1.12.10
+    container_name: sing-box-server
+    restart: always
+    volumes:
+      - ./configs/${SERVER_CONFIG_FILE:-server.json}:/etc/sing-box/config.json
+      # - ../certbot/certbot-etc/:/etc/sing-box/certs/
+      - ./geodata:/var/lib/sing-box/geodata
+    command: -D /var/lib/sing-box -C /etc/sing-box/ run
+    # ports:
+    #   - 80:80
+    #   - 443:443/udp
+    #   - 2080:2080
+    network_mode: "host"
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "1"
+
+  client:
+    image: ghcr.io/sagernet/sing-box:v1.12.10
+    container_name: sing-box-client
+    restart: always
+    volumes:
+      - ./configs/client.json:/etc/sing-box/config.json
+    command: -D /var/lib/sing-box -C /etc/sing-box/ run
+    # ports:
+    #   - 127.0.0.1:2080:2080
+    network_mode: "host"
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "1"
+

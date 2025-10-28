@@ -1,0 +1,142 @@
+{
+    "log": {
+        "disabled": false,
+        "level": "info",
+        "timestamp": true
+    },
+    "dns": {
+        "final": "dns-remote",
+        "servers": [
+            {
+                "tag": "dns-direct",
+                "type": "udp",
+                "server": "217.218.155.155"
+            },
+            {
+                "tag": "dns-remote",
+                "type": "h3",
+                "server": "1.1.1.1"
+            },
+            {
+                "tag": "dns-local",
+                "type": "local"
+            }
+        ],
+        "rules": [],
+        "strategy": "ipv4_only",
+        "disable_cache": false,
+        "disable_expire": false,
+        "independent_cache": false,
+        "reverse_mapping": false
+    },
+    "inbounds": [
+        {
+            "type": "tun",
+            "tag": "tun-in",
+            "address": [
+                "172.18.0.1/30",
+                "fdfe:dcba:9876::1/126"
+            ],
+            "mtu": 9000,
+            "auto_route": true,
+            "endpoint_independent_nat": false,
+            "stack": "gvisor",
+            "strict_route": true,
+            "sniff": true
+        },
+        {
+            "type": "mixed",
+            "tag": "mixed-in",
+            "listen": "0.0.0.0",
+            "listen_port": 2080
+        }
+    ],
+    "outbounds": [
+        {
+            "alter_id": 0,
+            "domain_strategy": "ipv4_only",
+            "packet_encoding": "",
+            "security": "auto",
+            "server": "CHANGEME_TO_SERVER_ADDRESS",
+            "server_port": 80,
+            "tag": "proxy",
+            "type": "vmess",
+            "uuid": "CHANGEME_TO_EXAMPLE-USER_UUID"
+        },
+        {
+            "type": "direct",
+            "tag": "direct"
+        }
+    ],
+    "route": {
+        "default_domain_resolver": {
+            "server": "dns-remote",
+            "strategy": "ipv4_only",
+            "disable_cache": false,
+            "rewrite_ttl": null,
+            "client_subnet": null
+        },
+        "auto_detect_interface": true,
+        "rules": [
+            {
+                "action": "sniff"
+            },
+            {
+                "protocol": "dns",
+                "action": "hijack-dns"
+            },
+            {
+                "inbound": "mixed-in",
+                "action": "resolve"
+            },
+            {
+                "inbound": "mixed-in",
+                "action": "sniff",
+                "timeout": "1s"
+            },
+            {
+                "rule_set": [
+                    "geosite-ir",
+                    "geoip-ir"
+                ],
+                "outbound": "direct"
+            },
+            {
+                "ip_is_private": true,
+                "outbound": "direct"
+            },
+            {
+                "source_ip_cidr": [
+                    "224.0.0.0/3",
+                    "ff00::/8"
+                ],
+                "ip_cidr": [
+                    "224.0.0.0/3",
+                    "ff00::/8"
+                ],
+                "action": "reject"
+            }
+        ],
+        "rule_set": [
+            {
+                "tag": "geosite-ir",
+                "type": "remote",
+                "format": "binary",
+                "url": "https://github.com/bootmortis/sing-geosite/releases/latest/download/geosite-all.srs"
+                // "download_detour": "direct"
+            },
+            {
+                "tag": "geoip-ir",
+                "type": "remote",
+                "format": "binary",
+                "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-ir.srs"
+                // "download_detour": "direct"
+            }
+        ]
+    },
+    "experimental": {
+        "cache_file": {
+            "enabled": true
+        }
+    }
+}
