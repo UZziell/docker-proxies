@@ -34,11 +34,11 @@ services:
     command:
       - /usr/bin/naive
       - --log
-      - --listen=socks://0.0.0.0:1080
+      - --listen=socks://0.0.0.0:${NAIVEPROXY_CLIENT_LISTEN_PORT:-1080}
       - --proxy=https://${NAIVEPROXY_USERNAME}:${NAIVEPROXY_PASSWORD}@${NAIVEPROXY_DOMAIN}
     restart: always
     ports:
-      - 127.0.0.1:8080:1080
+      - 127.0.0.1:${NAIVEPROXY_CLIENT_LISTEN_PORT:-1080}:${NAIVEPROXY_CLIENT_LISTEN_PORT:-1080}
     logging:
       driver: "json-file"
       options:
