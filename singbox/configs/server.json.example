@@ -74,10 +74,6 @@
     ],
     "outbounds": [
         {
-            "type": "direct",
-            "tag": "direct"
-        },
-        {
             "type": "socks",
             "tag": "socks_naiveproxy",
             "version": "5",
@@ -105,6 +101,10 @@
             "server_port": 8000,
             "username": "sa",
             "password": "CHANGEME"
+        },
+        {
+            "type": "direct",
+            "tag": "direct"
         }
     ],
     "route": {
@@ -161,13 +161,13 @@
                 "tag": "geosite-ir",
                 "type": "local",
                 "format": "binary",
-                "path": "geodata/geoip-ir.srs"
+                "path": "geodata/geosite-ir.srs"
             },
             {
                 "tag": "geoip-ir",
                 "type": "local",
                 "format": "binary",
-                "path": "geodata/geosite-all.srs"
+                "path": "geodata/geoip-ir.srs"
             }
         ]
     },

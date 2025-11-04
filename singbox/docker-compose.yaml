@@ -5,8 +5,9 @@ services:
     restart: always
     volumes:
       - ./configs/${SERVER_CONFIG_FILE:-server.json}:/etc/sing-box/config.json
-      # - ../certbot/certbot-etc/:/etc/sing-box/certs/
       - ./geodata:/var/lib/sing-box/geodata
+      # - ../certbot/certbot-etc/:/etc/sing-box/certs/
+      # - ./data/cache.db:/var/lib/sing-box/cache.db
     command: -D /var/lib/sing-box -C /etc/sing-box/ run
     # ports:
     #   - 80:80
