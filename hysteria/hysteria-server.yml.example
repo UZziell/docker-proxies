@@ -1,13 +1,13 @@
 listen: :443 
 
-# CHANGE ME
+# CHANGEME
 tls:
   cert: /etc/hysteria/certs/live/EXAMPLE.COM/fullchain.pem
   key: /etc/hysteria/certs/live/EXAMPLE.COM/privkey.pem
 
 auth:
   type: password
-  # CHANGE ME
+  # CHANGEME
   password: SECRET_PASSWORD
   userpass:
     user1: pass1
@@ -17,7 +17,7 @@ auth:
 masquerade:
   type: proxy
   proxy:
-    # CHANGE ME
+    # CHANGEME
     url: https://archive.ubuntu.com/ubuntu
     rewriteHost: true
   listenHTTP: :80
