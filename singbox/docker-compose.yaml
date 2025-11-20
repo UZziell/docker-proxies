@@ -1,6 +1,6 @@
 services:
   server:
-    image: ghcr.io/sagernet/sing-box:v1.12.10
+    image: ghcr.io/sagernet/sing-box:v1.12.12
     container_name: sing-box-server
     restart: always
     volumes:
@@ -21,7 +21,7 @@ services:
         max-file: "1"
 
   client:
-    image: ghcr.io/sagernet/sing-box:v1.12.10
+    image: ghcr.io/sagernet/sing-box:v1.12.12
     container_name: sing-box-client
     restart: always
     volumes:
