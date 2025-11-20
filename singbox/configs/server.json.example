@@ -134,24 +134,27 @@
                 "timeout": "1s"
             },
             {
-                "rule_set": [
-                    "geosite-ir",
-                    "geoip-ir"
-                ],
-                "action": "reject"
-            },
-            {
                 "ip_is_private": true,
                 "outbound": "direct"
             },
             {
-                "source_ip_cidr": [
-                    "224.0.0.0/3",
-                    "ff00::/8"
-                ],
+                // "remarks": "reject class D multicast",
                 "ip_cidr": [
                     "224.0.0.0/3",
                     "ff00::/8"
+                ],
+                "action": "reject"
+            },
+            {
+                // "remarks": "reject bittorrent",
+                "protocol": "bittorrent",
+                "outbound": "reject"
+            },
+            {
+                // "remarks": "reject geosite-ir and geoip-ir (Iran domains and IPs)",
+                "rule_set": [
+                    "geosite-ir",
+                    "geoip-ir"
                 ],
                 "action": "reject"
             }
