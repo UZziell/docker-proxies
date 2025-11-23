@@ -5,6 +5,8 @@ services:
       - ./certbot-etc:/etc/letsencrypt
       - ./cloudflare-secret.ini:/secrets/cloudflare-secret.ini:ro
     command: certonly --dns-cloudflare --dns-cloudflare-credentials /secrets/cloudflare-secret.ini --dns-cloudflare-propagation-seconds 60 --preferred-challenges dns-01 --email ${CERTIFICATE_NOTIFICATIOIN_EMAIL} --agree-tos --no-eff-email -d *.${CERTIFICATE_DOMAIN} -d ${CERTIFICATE_DOMAIN}
+    # command: certonly --webroot --webroot-path=/var/www/certbot --email ${CERTIFICATE_NOTIFICATIOIN_EMAIL} --agree-tos --no-eff-email -d ${CERTIFICATE_DOMAIN} -d www.${CERTIFICATE_DOMAIN}
+    # entrypoint: sleep 99999999
     logging:
       driver: json-file
       options:
