@@ -6,30 +6,56 @@
     },
     "dns": {
         "final": "dns-remote",
+        "strategy": "ipv4_only",
+        "disable_cache": false,
+        "disable_expire": false,
+        "independent_cache": false,
+        "cache_capacity": 4096,
+        "reverse_mapping": false,
         "servers": [
+            {
+                "tag": "dns-remote",
+                "type": "https",
+                "server": "resolver1.absolight.net",
+                "domain_resolver": "dns-direct",
+                "detour": "proxy"
+            },
             {
                 "tag": "dns-direct",
                 "type": "udp",
                 "server": "217.218.155.155"
             },
             {
-                "tag": "dns-remote",
-                "type": "h3",
-                "server": "1.1.1.1"
-            },
-            {
                 "tag": "dns-local",
                 "type": "local"
             }
         ],
-        "rules": [],
-        "strategy": "ipv4_only",
-        "disable_cache": false,
-        "disable_expire": false,
-        "independent_cache": false,
-        "reverse_mapping": false
+        "rules": [
+            {
+                "domain": [],
+                "domain_keyword": [],
+                "domain_regex": [],
+                "domain_suffix": [
+                    ".ir"
+                ],
+                "rule_set": [
+                    "geosite-ir",
+                    "geoip-ir"
+                ],
+                "server": "dns-direct"
+            }
+        ]
     },
     "inbounds": [
+        {
+            "type": "mixed",
+            "tag": "mixed-in",
+            "listen": "0.0.0.0",
+            "listen_port": 2080,
+            "domain_strategy": "ipv4_only",
+            "sniff": true,
+            "sniff_override_destination": true
+        },
         {
             "type": "tun",
             "tag": "tun-in",
@@ -46,12 +72,6 @@
                 "192.168.0.0/16"
             ],
             "sniff": true
-        },
-        {
-            "type": "mixed",
-            "tag": "mixed-in",
-            "listen": "0.0.0.0",
-            "listen_port": 2080
         }
     ],
     "outbounds": [
@@ -62,6 +82,7 @@
             "security": "auto",
             "server": "CHANGEME_TO_SERVER_ADDRESS",
             "server_port": 80,
+            // "tag": "vmess-out",
             "tag": "proxy",
             "type": "vmess",
             "uuid": "CHANGEME_TO_EXAMPLE-USER_UUID"
@@ -98,6 +119,12 @@
                 "timeout": "1s"
             },
             {
+                // "remarks": "direct bittorrent",
+                "protocol": "bittorrent",
+                "outbound": "direct"
+            },
+            {
+                // "remarks": "direct geosite-ir and geoip-ir (Iran domains and IPs)",
                 "rule_set": [
                     "geosite-ir",
                     "geoip-ir"
@@ -105,35 +132,55 @@
                 "outbound": "direct"
             },
             {
+                // "remarks": "direct private ip",
                 "ip_is_private": true,
                 "outbound": "direct"
             },
             {
-                "source_ip_cidr": [
-                    "224.0.0.0/3",
-                    "ff00::/8"
-                ],
+                "remarks": "reject class D multicast",
                 "ip_cidr": [
                     "224.0.0.0/3",
                     "ff00::/8"
+                ],
+                "action": "reject"
+            },
+            {
+                "remarks": "reject udp on port 443",
+                "port": [
+                    443
+                ],
+                "network": "udp",
+                "action": "reject"
+            },
+            {
+                "remarks": "reject category-ads-all",
+                "rule_set": [
+                    "category-ads-all"
                 ],
                 "action": "reject"
             }
         ],
         "rule_set": [
             {
+                // "download_detour": "direct",
                 "tag": "geosite-ir",
                 "type": "remote",
                 "format": "binary",
                 "url": "https://github.com/bootmortis/sing-geosite/releases/latest/download/geosite-all.srs"
-                // "download_detour": "direct"
             },
             {
+                // "download_detour": "direct",
                 "tag": "geoip-ir",
                 "type": "remote",
                 "format": "binary",
                 "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-ir.srs"
-                // "download_detour": "direct"
+            },
+            {
+                // "download_detour": "direct",
+                "tag": "category-ads-all",
+                "type": "remote",
+                "format": "binary",
+                "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs"
             }
         ]
     },
