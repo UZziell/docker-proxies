@@ -4,47 +4,14 @@
         "level": "info",
         "timestamp": true
     },
-    "dns": {
-        "final": "dns-remote",
-        "strategy": "ipv4_only",
-        "disable_cache": false,
-        "disable_expire": false,
-        "independent_cache": false,
-        "cache_capacity": 4096,
-        "reverse_mapping": false,
-        "servers": [
-            {
-                "tag": "dns-remote",
-                "type": "https",
-                "server": "resolver1.absolight.net",
-                "domain_resolver": "dns-direct",
-                "detour": "proxy"
-            },
-            {
-                "tag": "dns-direct",
-                "type": "udp",
-                "server": "217.218.155.155"
-            },
-            {
-                "tag": "dns-local",
-                "type": "local"
-            }
-        ],
-        "rules": [
-            {
-                "domain": [],
-                "domain_keyword": [],
-                "domain_regex": [],
-                "domain_suffix": [
-                    ".ir"
-                ],
-                "rule_set": [
-                    "geosite-ir",
-                    "geoip-ir"
-                ],
-                "server": "dns-direct"
-            }
-        ]
+    "experimental": {
+        "cache_file": {
+            "enabled": true,
+            "store_fakeip": false
+        },
+        "clash_api": {
+            "external_controller": "127.0.0.1:33371"
+        }
     },
     "inbounds": [
         {
@@ -52,7 +19,6 @@
             "tag": "mixed-in",
             "listen": "0.0.0.0",
             "listen_port": 2080,
-            "domain_strategy": "ipv4_only",
             "sniff": true,
             "sniff_override_destination": true
         },
@@ -92,6 +58,163 @@
             "tag": "direct"
         }
     ],
+    "dns": {
+        "final": "dns-remote",
+        "strategy": "ipv4_only",
+        "disable_cache": false,
+        "disable_expire": false,
+        "independent_cache": true,
+        "cache_capacity": 4096,
+        "reverse_mapping": false,
+        "servers": [
+            {
+                "tag": "dns-remote",
+                "type": "https",
+                "server": "resolver1.absolight.net",
+                "domain_resolver": "dns-direct",
+                "detour": "proxy"
+            },
+            {
+                "tag": "dns-direct",
+                "type": "udp",
+                "server": "217.218.155.155"
+            },
+            {
+                "domain_resolver": "dns-direct",
+                "type": "local",
+                "tag": "dns-local"
+            },
+            {
+                "predefined": {
+                    "dns.google": [
+                        "8.8.8.8",
+                        "8.8.4.4",
+                        "2001:4860:4860::8888",
+                        "2001:4860:4860::8844"
+                    ],
+                    "dns.alidns.com": [
+                        "223.5.5.5",
+                        "223.6.6.6",
+                        "2400:3200::1",
+                        "2400:3200:baba::1"
+                    ],
+                    "one.one.one.one": [
+                        "1.1.1.1",
+                        "1.0.0.1",
+                        "2606:4700:4700::1111",
+                        "2606:4700:4700::1001"
+                    ],
+                    "1dot1dot1dot1.cloudflare-dns.com": [
+                        "1.1.1.1",
+                        "1.0.0.1",
+                        "2606:4700:4700::1111",
+                        "2606:4700:4700::1001"
+                    ],
+                    "cloudflare-dns.com": [
+                        "104.16.249.249",
+                        "104.16.248.249",
+                        "2606:4700::6810:f8f9",
+                        "2606:4700::6810:f9f9"
+                    ],
+                    "dns.cloudflare.com": [
+                        "104.16.132.229",
+                        "104.16.133.229",
+                        "2606:4700::6810:84e5",
+                        "2606:4700::6810:85e5"
+                    ],
+                    "dot.pub": [
+                        "1.12.12.12",
+                        "120.53.53.53"
+                    ],
+                    "doh.pub": [
+                        "1.12.12.12",
+                        "120.53.53.53"
+                    ],
+                    "dns.quad9.net": [
+                        "9.9.9.9",
+                        "149.112.112.112",
+                        "2620:fe::fe",
+                        "2620:fe::9"
+                    ],
+                    "dns.yandex.net": [
+                        "77.88.8.8",
+                        "77.88.8.1",
+                        "2a02:6b8::feed:0ff",
+                        "2a02:6b8:0:1::feed:0ff"
+                    ],
+                    "dns.sb": [
+                        "185.222.222.222",
+                        "2a09::"
+                    ],
+                    "dns.umbrella.com": [
+                        "208.67.220.220",
+                        "208.67.222.222",
+                        "2620:119:35::35",
+                        "2620:119:53::53"
+                    ],
+                    "dns.sse.cisco.com": [
+                        "208.67.220.220",
+                        "208.67.222.222",
+                        "2620:119:35::35",
+                        "2620:119:53::53"
+                    ],
+                    "engage.cloudflareclient.com": [
+                        "162.159.192.1",
+                        "2606:4700:d0::a29f:c001"
+                    ]
+                },
+                "type": "hosts",
+                "tag": "dns-hosts"
+            }
+        ],
+        "rules": [
+            {
+                "server": "dns-hosts",
+                "ip_accept_any": true
+            },
+            {
+                "server": "dns-remote",
+                "clash_mode": "Global"
+            },
+            {
+                "server": "dns-local",
+                "clash_mode": "Direct"
+            },
+            {
+                "action": "predefined",
+                "rcode": "NOTIMP",
+                "query_type": [
+                    64,
+                    65
+                ]
+            },
+            {
+                "rule_set": [
+                    "geosite-category-ads-all"
+                ],
+                "action": "predefined",
+                "rcode": "NXDOMAIN"
+            },
+            {
+                "server": "dns-local",
+                "rule_set": [
+                    "geoip-ir"
+                ]
+            },
+            {
+                "server": "dns-local",
+                "rule_set": [
+                    "geosite-ir"
+                ]
+            },
+            {
+                "server": "dns-local",
+                "domain_suffix": [
+                    ".ir"
+                ]
+            }
+        ]
+    },
     "route": {
         "default_domain_resolver": {
             "server": "dns-remote",
@@ -100,34 +223,104 @@
             "rewrite_ttl": null,
             "client_subnet": null
         },
+        // "override_android_vpn": true,
         "auto_detect_interface": true,
         "rules": [
             {
                 "action": "sniff"
             },
             {
-                "protocol": "dns",
+                "protocol": [
+                    "dns"
+                ],
                 "action": "hijack-dns"
             },
+            // Clash compatibility
             {
-                "inbound": "mixed-in",
-                "action": "resolve"
+                "outbound": "direct",
+                "clash_mode": "Direct"
             },
             {
-                "inbound": "mixed-in",
-                "action": "sniff",
-                "timeout": "1s"
+                "outbound": "proxy",
+                "clash_mode": "Global"
             },
             {
                 // "remarks": "direct bittorrent",
-                "protocol": "bittorrent",
+                "protocol": [
+                    "bittorrent"
+                ],
                 "outbound": "direct"
             },
             {
-                // "remarks": "direct geosite-ir and geoip-ir (Iran domains and IPs)",
+                // "remarks": "direct custom Iran IP_CIDRs",
+                "ip_cidr": [
+                    "5.160.47.0/24",
+                    "5.160.197.0/24",
+                    "31.58.239.0/24",
+                    "46.38.144.0/24",
+                    "77.237.66.0/24",
+                    "77.237.67.0/24",
+                    "87.107.102.0/24",
+                    "89.235.78.0/24",
+                    "89.235.79.0/24",
+                    "178.239.157.0/24",
+                    "185.137.24.0/24",
+                    "185.137.25.0/24",
+                    "185.137.26.0/24",
+                    "185.137.27.0/24",
+                    "185.171.53.0/24",
+                    "185.191.76.0/24",
+                    "185.191.77.0/24",
+                    "185.191.78.0/24",
+                    "185.191.79.0/24",
+                    "188.75.79.0/24",
+                    "213.195.22.0/24",
+                    "2a0c:99c0::/29",
+                    "23.178.64.0/24",
+                    "72.13.122.0/23",
+                    "104.153.196.0/24",
+                    "104.153.198.0/24",
+                    "162.252.212.0/24",
+                    "162.252.215.0/24",
+                    "172.98.36.0/24",
+                    "199.38.148.0/24",
+                    "199.84.138.0/24",
+                    "206.166.193.0/24",
+                    "208.95.115.0/24",
+                    "216.59.58.0/24",
+                    "216.59.61.0/24",
+                    "216.59.62.0/24",
+                    "104.153.197.0/24",
+                    "104.153.199.0/24",
+                    "161.36.111.0/24",
+                    "162.252.213.0/24",
+                    "162.252.214.0/24",
+                    "172.98.37.0/24",
+                    "172.98.39.0/24",
+                    "208.95.112.0/24",
+                    "208.95.113.0/24",
+                    "208.95.114.0/24",
+                    "216.21.12.0/24",
+                    "216.21.13.0/24",
+                    "216.59.56.0/24",
+                    "216.59.57.0/24",
+                    "216.59.59.0/24",
+                    "216.59.60.0/24",
+                    "216.59.63.0/24"
+                ],
+                "outbound": "direct"
+            },
+            {
+                // "remarks": "direct geoip-ir (Iran IPs)",
                 "rule_set": [
-                    "geosite-ir",
                     "geoip-ir"
+                ],
+                "outbound": "direct"
+            },
+            {
+                // "remarks": "direct geosite-ir (Iran domains)",
+                "rule_set": [
+                    "geosite-ir"
                 ],
                 "outbound": "direct"
             },
@@ -155,7 +348,7 @@
             {
                 "remarks": "reject category-ads-all",
                 "rule_set": [
-                    "category-ads-all"
+                    "geosite-category-ads-all"
                 ],
                 "action": "reject"
             }
@@ -177,16 +370,11 @@
             },
             {
                 // "download_detour": "direct",
-                "tag": "category-ads-all",
+                "tag": "geosite-category-ads-all",
                 "type": "remote",
                 "format": "binary",
                 "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs"
             }
         ]
-    },
-    "experimental": {
-        "cache_file": {
-            "enabled": true
-        }
     }
 }
