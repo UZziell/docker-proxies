@@ -1,6 +1,6 @@
 services:
   server:
-    image: ghcr.io/sagernet/sing-box:v1.12.12
+    image: ghcr.io/sagernet/sing-box:v1.12.13
     container_name: sing-box-server
     restart: always
     volumes:
@@ -21,11 +21,12 @@ services:
         max-file: "1"
 
   client:
-    image: ghcr.io/sagernet/sing-box:v1.12.12
+    image: ghcr.io/sagernet/sing-box:v1.12.13
     container_name: sing-box-client
     restart: always
     volumes:
       - ./configs/client.json:/etc/sing-box/config.json
+      # - ./data/cache.db:/var/lib/sing-box/cache.db
     command: -D /var/lib/sing-box -C /etc/sing-box/ run
     # ports:
     #   - 127.0.0.1:2080:2080
