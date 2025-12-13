@@ -1,15 +1,13 @@
 listen: :443 
 
-# CHANGEME
 tls:
-  cert: /etc/hysteria/certs/live/EXAMPLE.COM/fullchain.pem
-  key: /etc/hysteria/certs/live/EXAMPLE.COM/privkey.pem
+  cert: /etc/hysteria/certs/live/CHANGEME_TO_CERTBOT_CERTIFICATE_DOMAIN/fullchain.pem
+  key: /etc/hysteria/certs/live/CHANGEME_TO_CERTBOT_CERTIFICATE_DOMAIN/privkey.pem
   sniGuard: strict
 
 auth:
   type: password
-  # CHANGEME
-  password: SECRET_PASSWORD_CHANGEME
+  password: CHANGEME_TO_USER_PASSWORD
   userpass:
     user1: pass1
     user2: pass2
@@ -18,7 +16,7 @@ auth:
 masquerade:
   type: proxy
   proxy:
-    # CHANGEME
+    # CHANGEME_TO_MASQUERADE_URL
     url: https://archive.ubuntu.com/ubuntu
     rewriteHost: true
   listenHTTP: :80
@@ -30,8 +28,7 @@ disableUDP: false
 obfs:
   type: salamander
   salamander:
-  # CHANGEME
-    password: OBFS_PASSWORD_CHANGEME
+    password: CHANGEME_TO_OBFS_PASSWORD
 
 # resolver:
 #   type: udp | tcp | tls | https 
