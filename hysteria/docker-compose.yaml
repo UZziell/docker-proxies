@@ -1,13 +1,15 @@
 services:
-  hysteria:
-    image: tobyxdd/hysteria
+  server:
+    image: tobyxdd/hysteria:${HYSTERIA_IMAGE_TAG:-v2.6.5}
     container_name: hysteria
     restart: always
     ports:
-      - 80:80/tcp
-      - 443:443/tcp
-      # - 443:443/udp
+      - "[::]:80:80/tcp"
+      - "[::]:443:443/tcp"
+      - "[::]:443:443/udp"
     # network_mode: "host"
+    environment:
+      HYSTERIA_LOG_LEVEL: "info"
     volumes:
       - ../certbot/certbot-etc/:/etc/hysteria/certs/
       - ./hysteria-server.yaml:/etc/hysteria.yaml
@@ -17,4 +19,3 @@ services:
       options:
         max-size: "50m"
         max-file: "1"
-

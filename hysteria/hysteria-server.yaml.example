@@ -4,11 +4,12 @@ listen: :443
 tls:
   cert: /etc/hysteria/certs/live/EXAMPLE.COM/fullchain.pem
   key: /etc/hysteria/certs/live/EXAMPLE.COM/privkey.pem
+  sniGuard: strict
 
 auth:
   type: password
   # CHANGEME
-  password: SECRET_PASSWORD
+  password: SECRET_PASSWORD_CHANGEME
   userpass:
     user1: pass1
     user2: pass2
@@ -23,3 +24,31 @@ masquerade:
   listenHTTP: :80
   listenHTTPS: :443
   forceHTTPS: true
+
+disableUDP: false
+
+obfs:
+  type: salamander
+  salamander:
+  # CHANGEME
+    password: OBFS_PASSWORD_CHANGEME
+
+# resolver:
+#   type: udp | tcp | tls | https 
+#   tcp:
+#     addr: 8.8.8.8:53 
+#     timeout: 4s 
+#   udp:
+#     addr: 8.8.4.4:53 
+#     timeout: 4s
+#   tls:
+#     addr: 1.1.1.1:853 
+#     timeout: 10s
+#     sni: cloudflare-dns.com 
+#     insecure: false 
+#   https:
+#     addr: 1.1.1.1:443 
+#     timeout: 10s
+#     sni: cloudflare-dns.com
+#     insecure: false
+
