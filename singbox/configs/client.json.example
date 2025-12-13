@@ -42,14 +42,24 @@
     ],
     "outbounds": [
         {
+            "type": "urltest",
+            "tag": "proxy",
+            "outbounds": [
+                "vmess-out"
+            ],
+            "url": "https://www.gstatic.com/generate_204",
+            "interval": "10m",
+            "tolerance": 200,
+            "idle_timeout": "30m",
+            "interrupt_exist_connections": false
+        },
+        {
             "alter_id": 0,
-            "domain_strategy": "ipv4_only",
             "packet_encoding": "",
             "security": "auto",
             "server": "CHANGEME_TO_SERVER_ADDRESS",
             "server_port": 80,
-            // "tag": "vmess-out",
-            "tag": "proxy",
+            "tag": "vmess-out",
             "type": "vmess",
             "uuid": "CHANGEME_TO_EXAMPLE-USER_UUID"
         },

@@ -58,21 +58,27 @@
             "transport": {}
         },
         {
-            "type": "direct",
-            "tag": "dns-in",
-            "listen": "127.0.0.1",
-            "listen_port": 6450,
-            "override_address": "1.1.1.1",
-            "override_port": 53
-        },
-        {
             "type": "mixed",
             "tag": "mixed-in",
             "listen": "127.0.0.1",
-            "listen_port": 2080
+            "listen_port": 2081
         }
     ],
     "outbounds": [
+        {
+            "type": "urltest",
+            "tag": "proxy",
+            "outbounds": [
+                "socks_naiveproxy",
+                "socks_pingtunnel",
+                "socks_dnstt"
+            ],
+            "url": "https://www.gstatic.com/generate_204",
+            "interval": "5m",
+            "tolerance": 200,
+            "idle_timeout": "30m",
+            "interrupt_exist_connections": false
+        },
         {
             "type": "socks",
             "tag": "socks_naiveproxy",
@@ -134,8 +140,9 @@
                 "timeout": "1s"
             },
             {
+                // "remarks": "reject private IPs",
                 "ip_is_private": true,
-                "outbound": "direct"
+                "action": "reject"
             },
             {
                 // "remarks": "reject class D multicast",
