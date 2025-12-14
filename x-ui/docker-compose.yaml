@@ -1,0 +1,27 @@
+services:
+  x-ui:
+    image: ghcr.io/alireza0/x-ui:v1.9.1
+    environment:
+      XUI_LOG_LEVEL: info
+      XUI_DEBUG: "false"
+      XUI_DB_FOLDER: /etc/x-ui/db
+    volumes:
+      - ./data/db-${NODE_NAME:-}:/etc/x-ui/db
+      - ../certbot/certbot-etc/:/etc/x-ui/certs
+    restart: unless-stopped
+    network_mode: host
+    # ports:
+    #   - 80:80
+    #   - 443:443
+    #   - 2096:2096
+    #   - 2095:2095
+    logging:
+      options:
+        max-size: "50m"
+        max-file: "1"
+    # healthcheck:
+    #   test: ["CMD", "nc", "-z", "-v", "127.0.0.1", "80"]
+    #   interval: 20s
+    #   timeout: 5s
+    #   retries: 7
+    #   start_period: 10s
