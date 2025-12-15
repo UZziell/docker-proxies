@@ -46,22 +46,22 @@
                 }
             ],
             "tls": {},
-            "multiplex": {
-                "enabled": true,
-                "padding": false,
-                "brutal": {
-                    "enabled": true,
-                    "up_mbps": 2,
-                    "down_mbps": 2
-                }
-            },
+            // "multiplex": {
+            //     "enabled": true,
+            //     "padding": false,
+            //     "brutal": {
+            //         "enabled": true,
+            //         "up_mbps": 2,
+            //         "down_mbps": 2
+            //     }
+            // },
             "transport": {}
         },
         {
             "type": "mixed",
             "tag": "mixed-in",
             "listen": "127.0.0.1",
-            "listen_port": 2081
+            "listen_port": 2080
         }
     ],
     "outbounds": [
@@ -74,7 +74,7 @@
                 "socks_dnstt"
             ],
             "url": "https://www.gstatic.com/generate_204",
-            "interval": "5m",
+            "interval": "3m",
             "tolerance": 200,
             "idle_timeout": "30m",
             "interrupt_exist_connections": false
