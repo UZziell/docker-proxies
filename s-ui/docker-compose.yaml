@@ -6,6 +6,7 @@ services:
       - SUI_DEBUG=${SUI_DEBUG:-false}
     volumes:
       - "./data/db-${NODE_NAME:-}:/app/db"
+      - "../singbox/geodata:/app/geodata"
       - "../certbot/certbot-etc/:/app/cert"
     restart: unless-stopped
     network_mode: host
