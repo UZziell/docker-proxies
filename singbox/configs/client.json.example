@@ -31,6 +31,7 @@
             ],
             "mtu": 9000,
             "auto_route": true,
+            "auto_redirect": true,
             "endpoint_independent_nat": false,
             "stack": "gvisor",
             "strict_route": true,
@@ -195,23 +196,25 @@
         "reverse_mapping": false,
         "servers": [
             {
-                "tag": "dns-remote",
                 "type": "https",
+                "tag": "dns-remote",
                 "server": "resolver1.absolight.net",
-                "domain_resolver": "dns-direct",
+                "domain_resolver": "dns-hosts",
                 "detour": "proxy"
             },
             {
-                "tag": "dns-direct",
                 "type": "udp",
+                "tag": "dns-direct",
                 "server": "217.218.155.155"
             },
             {
-                "domain_resolver": "dns-direct",
                 "type": "local",
-                "tag": "dns-local"
+                "tag": "dns-local",
+                "domain_resolver": "dns-direct"
             },
             {
+                "type": "hosts",
+                "tag": "dns-hosts",
                 "predefined": {
                     "dns.google": [
                         "8.8.8.8",
@@ -288,10 +291,12 @@
                     "engage.cloudflareclient.com": [
                         "162.159.192.1",
                         "2606:4700:d0::a29f:c001"
+                    ],
+                    "resolver1.absolight.net": [
+                        "79.143.240.79",
+                        "2a01:678:3:9::2"
                     ]
-                },
-                "type": "hosts",
-                "tag": "dns-hosts"
+                }
             }
         ],
         "rules": [
@@ -317,7 +322,7 @@
             },
             {
                 "rule_set": [
-                    "geosite-category-ads-all"
+                    "geosite-ads"
                 ],
                 "action": "predefined",
                 "rcode": "NXDOMAIN"
@@ -353,9 +358,9 @@
         // "override_android_vpn": true,
         "auto_detect_interface": true,
         "rules": [
-            {
-                "action": "sniff"
-            },
+            // {
+            //     "action": "sniff"
+            // },
             {
                 "protocol": [
                     "dns"
@@ -372,9 +377,53 @@
                 "clash_mode": "Global"
             },
             {
+                "remarks": "reject class D multicast",
+                "ip_cidr": [
+                    "224.0.0.0/3",
+                    "ff00::/8"
+                ],
+                "action": "reject"
+            },
+            {
+                "remarks": "reject udp on port 443",
+                "port": [
+                    443
+                ],
+                "network": "udp",
+                "action": "reject"
+            },
+            {
+                "remarks": "reject category-ads-all and ir-ads",
+                "rule_set": [
+                    "geosite-ads",
+                    "geosite-ir-ads"
+                ],
+                "action": "reject"
+            },
+            {
+                // "remarks": "direct private ip",
+                "ip_is_private": true,
+                "outbound": "direct"
+            },
+            {
                 // "remarks": "direct bittorrent",
                 "protocol": [
                     "bittorrent"
+                ],
+                "outbound": "direct"
+            },
+            {
+                // "remarks": "direct geoip-ir (Iran IPs)",
+                "rule_set": [
+                    "geoip-ir",
+                    "geoip-private"
+                ],
+                "outbound": "direct"
+            },
+            {
+                // "remarks": "direct geosite-ir (Iran domains)",
+                "rule_set": [
+                    "geosite-ir"
                 ],
                 "outbound": "direct"
             },
@@ -436,49 +485,6 @@
                     "216.59.63.0/24"
                 ],
                 "outbound": "direct"
-            },
-            {
-                // "remarks": "direct geoip-ir (Iran IPs)",
-                "rule_set": [
-                    "geoip-ir",
-                    "geoip-private"
-                ],
-                "outbound": "direct"
-            },
-            {
-                // "remarks": "direct geosite-ir (Iran domains)",
-                "rule_set": [
-                    "geosite-ir"
-                ],
-                "outbound": "direct"
-            },
-            {
-                // "remarks": "direct private ip",
-                "ip_is_private": true,
-                "outbound": "direct"
-            },
-            {
-                "remarks": "reject class D multicast",
-                "ip_cidr": [
-                    "224.0.0.0/3",
-                    "ff00::/8"
-                ],
-                "action": "reject"
-            },
-            {
-                "remarks": "reject udp on port 443",
-                "port": [
-                    443
-                ],
-                "network": "udp",
-                "action": "reject"
-            },
-            {
-                "remarks": "reject category-ads-all",
-                "rule_set": [
-                    "geosite-category-ads-all"
-                ],
-                "action": "reject"
             }
         ],
         "rule_set": [
@@ -487,28 +493,40 @@
                 "tag": "geosite-ir",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://github.com/bootmortis/sing-geosite/releases/latest/download/geosite-all.srs"
+                // "url": "https://github.com/bootmortis/sing-geosite/releases/latest/download/geosite-all.srs"
+                "url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/category-ir.srs"
+            },
+            {
+                // "download_detour": "direct",
+                "tag": "geosite-ir-ads",
+                "type": "remote",
+                "format": "binary",
+                "url": "https://github.com/bootmortis/sing-geosite/releases/latest/download/geosite-ads.srs"
             },
             {
                 // "download_detour": "direct",
                 "tag": "geoip-ir",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-ir.srs"
+                "url": "https://testingcf.jsdelivr.net/gh/SagerNet/sing-geoip@rule-set/geoip-ir.srs"
+                // "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-ir.srs"
+                // "url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/ir.srs"
             },
             {
                 // "download_detour": "direct",
-                "tag": "geosite-category-ads-all",
+                "tag": "geosite-ads",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs"
+                "url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/category-ads-all.srs"
+                // "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs"
             },
             {
+                // "download_detour": "direct",
                 "tag": "geoip-private",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/private.srs",
-                "download_detour": "direct"
+                "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/private.srs"
+                // "url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/private.srs"
             }
         ]
     }
