@@ -1,0 +1,76 @@
+name: hiddify
+services:
+  hiddify-manager:
+    image: ghcr.io/hiddify/hiddify-manager:latest
+    # restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SQLALCHEMY_DATABASE_URI: 'mysql+mysqldb://${MARIADB_USER}:${MARIADB_PASSWORD}@mariadb/${MARIADB_DATABASE:-hiddifypanel}?charset=utf8mb4'
+    volumes:
+      - ./data/:/hiddify-data/
+    #network_mode: host
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "1"
+
+  mariadb:
+    image: mariadb:lts-noble
+    restart: unless-stopped
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: 1
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-hiddifypanel}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+    volumes:
+      - ./data/mariadb_data:/var/lib/mysql
+    healthcheck:
+        test: ["CMD-SHELL", "mariadb-admin ping -u $${MARIADB_USER} -p$${MARIADB_PASSWORD} -h localhost && mariadb -u $${MARIADB_USER} -p$${MARIADB_PASSWORD} -e 'USE ${MARIADB_DATABASE:-hiddifypanel};'"]
+        start_period: 10s
+        interval: 30s
+        retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "1"
+
+  redis:
+    image: redis:8.4.0-bookworm
+    ports:
+      - "127.0.0.1:6379:6379"
+    command: [
+      "redis-server",
+      "--maxmemory", "${REDIS_MAXMEMORY:-256m}",
+      "--requirepass", "${REDIS_PASSWORD}",
+      "--save", "900 1",
+      "--save", "300 10",
+      "--save", "60 10000",
+      "--appendonly", "yes",
+      "--appendfsync", "everysec"
+    ]
+    volumes:
+      - ./data/redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -p 6379 --raw incr ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "1"
