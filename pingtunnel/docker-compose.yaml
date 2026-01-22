@@ -17,6 +17,11 @@ services:
       -nolog 1
       -key ${PINGTUNNEL_KEY}
       -maxconn ${PINGTUNNEL_SERVER_MAXCONN:-0}
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "1"
 
   client:
     image: ${IMAGE_REGISTRY}esrrhs/pingtunnel
@@ -32,3 +37,8 @@ services:
       -tcp_mw ${PINGTUNNEL_CLIENT_TCP_MAX_WINDOW:-20000}
       -key ${PINGTUNNEL_KEY}
       -s ${PINGTUNNEL_CLIENT_SERVER_ADDRESS}
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "1"
