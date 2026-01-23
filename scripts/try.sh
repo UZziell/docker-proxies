@@ -6,7 +6,7 @@ export JOBS="${1:-20}"
 export TEST_MODE="${2:-dnstt}"
 
 export DATA_DIR="./data"
-export DNS_FILE="./dns-ir-extended.txt"
+export DNS_FILE="${3:-./dns-ir-extended.txt}"
 export WORKING_DNS_FILE="./${DATA_DIR}/dns-working-${TEST_MODE}.txt"
 export RESULTS_FILE="./${DATA_DIR}/RESULTS.txt"
 export SLIPSTREAM_PATH="../slipstream-rust"
@@ -23,8 +23,10 @@ export SOCKS_USER_PASS=
 mkdir -p "$DATA_DIR"
 if [[ $TEST_MODE == "dnstt" ]]; then
 	export DNS_TEST_DOMAIN=$DNSTT_TEST_DOMAIN
+	export TEST_DOMAIN=$DNSTT_DOMAIN
 elif [[ $TEST_MODE == "slip" ]]; then
 	export DNS_TEST_DOMAIN=$SLIPSTREAM_TEST_DOMAIN
+	export TEST_DOMAIN=$SLIPSTREAM_DOMAIN
 fi
 
 # Dependency Pre-check
@@ -52,7 +54,7 @@ fi
 
 # DNS Pre-filtering
 if ! [ -s "$WORKING_DNS_FILE" ] || ! [ -n "$(find "$WORKING_DNS_FILE" -mtime -1)" ]; then
-	echo "[*] Using $DNS_UTILITY for pre-filtering responsive DNS servers..."
+	echo "[*] Using $DNS_UTILITY for pre-filtering responsive DNS servers | DNS TEST DOMAIN: $DNS_TEST_DOMAIN"
 	# Filters based on basic response to a known record
 	cat "$DNS_FILE" | parallel -j "${JOBS}" --bar \
 		"timeout 2 $DNS_UTILITY @{} ${DNS_TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >"$WORKING_DNS_FILE"
@@ -137,9 +139,7 @@ export -f test_resolver
 
 # Execution
 echo "[*] Starting deep tests using $JOBS parallel threads..."
-echo "[*] Tool detected: $DNS_UTILITY"
-echo "[*] Test mode: $TEST_MODE"
-
+echo "[*] Test mode: $TEST_MODE | Test Domain: ${TEST_DOMAIN}"
 echo "INFO | TEST START TIME: $(date +%FT%H:%M:%S)" >>"$RESULTS_FILE"
 
 cat "$WORKING_DNS_FILE" | parallel \
@@ -150,7 +150,7 @@ cat "$WORKING_DNS_FILE" | parallel \
 	test_resolver {} {#}
 
 echo -e "\n[*] Testing Complete."
-echo "[*] Total Successes: $(wc -l <"$RESULTS_FILE")"
+echo "[*] Total Successes: $(cat "$RESULTS_FILE" | grep -cv 'INFO |')"
 cat "$RESULTS_FILE"
 
 echo "INFO | TEST END TIME: $(date +%FT%H:%M:%S)" >>"$RESULTS_FILE"
