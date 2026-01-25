@@ -4,21 +4,21 @@
 # Use first argument for parallel jobs, default to 20
 export JOBS="${1:-20}"
 export TEST_MODE="${2:-dnstt}"
+export DNSTT_DOMAIN="${3:-}"
+export SLIPSTREAM_DOMAIN="${3:-}"
+export DNS_FILE="${4:-./dns-ir-extended.txt}"
+
+export DNSTT_TEST_DOMAIN=
+export SLIPSTREAM_TEST_DOMAIN=
+export SOCKS_USER_PASS=
 
 export DATA_DIR="./data"
-export DNS_FILE="${3:-./dns-ir-extended.txt}"
-export WORKING_DNS_FILE="./${DATA_DIR}/dns-working-${TEST_MODE}.txt"
+export WORKING_DNS_FILE="./${DATA_DIR}/dns-working.txt"
 export RESULTS_FILE="./${DATA_DIR}/RESULTS.txt"
 export SLIPSTREAM_PATH="../slipstream-rust"
 export DNSTT_PATH="../dnstt"
 export TIMEOUT=20
 export CURL_TIMEOUT=10
-export DNSTT_TEST_DOMAIN=
-export DNSTT_DOMAIN=
-export SLIPSTREAM_DOMAIN=
-export SLIPSTREAM_TEST_DOMAIN=
-export SOCKS_USER_PASS=
-
 
 mkdir -p "$DATA_DIR"
 if [[ $TEST_MODE == "dnstt" ]]; then
@@ -53,11 +53,11 @@ if [ -z "$DNS_UTILITY" ]; then
 fi
 
 # DNS Pre-filtering
-if ! [ -s "$WORKING_DNS_FILE" ] || ! [ -n "$(find "$WORKING_DNS_FILE" -mtime -1)" ]; then
-	echo "[*] Using $DNS_UTILITY for pre-filtering responsive DNS servers | DNS TEST DOMAIN: $DNS_TEST_DOMAIN"
-	# Filters based on basic response to a known record
+if ! [ -s "$WORKING_DNS_FILE" ] || [ -s "$4" ] || ! [ -n "$(find "$WORKING_DNS_FILE" -mtime -1)" ]; then
+	echo "[*] Using '$DNS_UTILITY' for pre-filtering responsive DNS servers | DNS TEST DOMAIN: $DNS_TEST_DOMAIN"
+	# Filters based on basic response to a known record	
 	cat "$DNS_FILE" | parallel -j "${JOBS}" --bar \
-		"timeout 2 $DNS_UTILITY @{} ${DNS_TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >"$WORKING_DNS_FILE"
+		"timeout 2 $DNS_UTILITY @{} ${DNS_TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
 	echo "[+] Found $(wc -l <"$WORKING_DNS_FILE") responsive DNS servers."
 fi
 
@@ -140,7 +140,7 @@ export -f test_resolver
 # Execution
 echo "[*] Starting deep tests using $JOBS parallel threads..."
 echo "[*] Test mode: $TEST_MODE | Test Domain: ${TEST_DOMAIN}"
-echo "INFO | TEST START TIME: $(date +%FT%H:%M:%S)" >>"$RESULTS_FILE"
+echo "INFO | TEST START TIME: $(date +%FT%H:%M:%S) | DOMAIN: ${TEST_DOMAIN}" >>"$RESULTS_FILE"
 
 cat "$WORKING_DNS_FILE" | parallel \
 	--bar \
