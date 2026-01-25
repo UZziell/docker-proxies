@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
 
 # Configuration
 # Use first argument for parallel jobs, default to 20
 export JOBS="${1:-20}"
 export TEST_MODE="${2:-dnstt}"
-export DNSTT_DOMAIN="${3:-}"
-export SLIPSTREAM_DOMAIN="${3:-}"
+export DNSTT_DOMAIN="${3}"
+export SLIPSTREAM_DOMAIN="${3}"
 export DNS_FILE="${4:-./dns-ir-extended.txt}"
 
 export DNSTT_TEST_DOMAIN=
@@ -21,6 +23,10 @@ export TIMEOUT=20
 export CURL_TIMEOUT=10
 
 mkdir -p "$DATA_DIR"
+if [[ -s $RESULTS_FILE ]]; then
+	mv $RESULTS_FILE "${RESULTS_FILE}.$(date +%FT%H%M%S)"
+fi
+
 if [[ $TEST_MODE == "dnstt" ]]; then
 	export DNS_TEST_DOMAIN=$DNSTT_TEST_DOMAIN
 	export TEST_DOMAIN=$DNSTT_DOMAIN
@@ -53,13 +59,15 @@ if [ -z "$DNS_UTILITY" ]; then
 fi
 
 # DNS Pre-filtering
+set +u
 if ! [ -s "$WORKING_DNS_FILE" ] || [ -s "$4" ] || ! [ -n "$(find "$WORKING_DNS_FILE" -mtime -1)" ]; then
 	echo "[*] Using '$DNS_UTILITY' for pre-filtering responsive DNS servers | DNS TEST DOMAIN: $DNS_TEST_DOMAIN"
-	# Filters based on basic response to a known record	
+	# Filters based on basic response to a known record
 	cat "$DNS_FILE" | parallel -j "${JOBS}" --bar \
 		"timeout 2 $DNS_UTILITY @{} ${DNS_TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
 	echo "[+] Found $(wc -l <"$WORKING_DNS_FILE") responsive DNS servers."
 fi
+set -u
 
 # Testing Function
 test_resolver() {
@@ -90,12 +98,12 @@ test_resolver() {
 				--domain "${SLIPSTREAM_DOMAIN}" --keep-alive-interval 30 >/dev/null 2>&1 &
 			local PID=$!
 			if wait_for_port $PORT_SLIP; then
-				CURL_STATS=$(curl -m "$CURL_TIMEOUT" -4 \
+
+				if CURL_STATS=$(curl -m "$CURL_TIMEOUT" -4 \
 					--socks5 socks5h://${SOCKS_USER_PASS}@127.0.0.1:$PORT_SLIP \
 					-o /dev/null -s \
 					-w "total=%{time_total}s | speed_download=%{speed_download}B/s speed_upload=%{speed_upload}B/s size_download=%{size_download}B" \
-					http://icanhazip.com 2>/dev/null)
-				if [ $? -eq 0 ]; then
+					http://icanhazip.com 2>/dev/null); then
 					printf "%-8s | %-15s | %s\n" "Slipstream" "$DNS" "$CURL_STATS" >>"$RESULTS_FILE"
 					log_status "✅ Slipstream Working"
 				fi
@@ -112,19 +120,14 @@ test_resolver() {
 				"${DNSTT_DOMAIN}" "127.0.0.1:$PORT_TT" >/dev/null 2>&1 &
 			local PID=$!
 			if wait_for_port $PORT_TT; then
-				CURL_STATS=$(curl -m "$CURL_TIMEOUT" -4 \
+				if CURL_STATS=$(curl -m "$CURL_TIMEOUT" -4 \
 					--socks5 socks5h://${SOCKS_USER_PASS}@127.0.0.1:$PORT_TT \
 					-o /dev/null -s \
 					-w "total=%{time_total}s | speed_download=%{speed_download}B/s speed_upload=%{speed_upload}B/s size_download=%{size_download}B" \
-					http://icanhazip.com 2>/dev/null)
-				if [ $? -eq 0 ]; then
+					http://icanhazip.com 2>/dev/null); then
 					printf "%-8s | %-15s | %s\n" "DNSTT" "$DNS" "$CURL_STATS" >>"$RESULTS_FILE"
 					log_status "✅ DNSTT Working"
 				fi
-				# if curl -m $CURL_TIMEOUT -4 --socks5 socks5h://${SOCKS_USER_PASS}@127.0.0.1:$PORT_TT http://icanhazip.com >/dev/null 2>&1; then
-				# 	echo "DNSTT      | $DNS" >>"$RESULTS_FILE"
-				# 	log_status "✅ DNSTT Working"
-				# fi
 			fi
 			kill $PID >/dev/null 2>&1
 		) &
