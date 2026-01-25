@@ -4,20 +4,22 @@ set -Eeuo pipefail
 SERVER_OR_CLIENT="${1:-}"
 DOMAIN="${2:-}"
 RESOLVER="${3:-}"
-TIMEOUT="${4:-30}"
+TIMEOUT="${4:-60}"
+INSTANCES="${5:-5}"
 
 SLIP_PID=""
+declare -a CLIENT_PIDS=()
 
 sleep_with_counter() {
-  local seconds=$1
-  local i=0
+	local seconds=$1
+	local i=1
 
-  while [ $i -lt "$seconds" ]; do
-    printf "\rSleeping: %d / %d seconds" "$i" "$seconds"
-    sleep 1
-    ((i++))
-  done
-  printf "\rSleeping: %d / %d seconds\n" "$seconds" "$seconds"
+	while [[ $i -lt "$seconds" ]]; do
+		printf "\rSleeping: %d / %d seconds%s" "$i" "$seconds" "$2"
+		sleep 1
+		((i++))
+	done
+	printf "\rSleeping: %d / %d seconds%s" "$i" "$seconds" "$2"
 }
 
 log() {
@@ -39,6 +41,7 @@ kill_port() {
 cleanup() {
 	log "shutdown requested, cleaning up..."
 
+	# Kill the single SLIP_PID if still set (for server or legacy client)
 	if [[ -n "${SLIP_PID:-}" ]] && kill -0 "$SLIP_PID" 2>/dev/null; then
 		log "killing slipstream pid $SLIP_PID"
 		kill -TERM "$SLIP_PID" 2>/dev/null || true
@@ -52,6 +55,31 @@ cleanup() {
 		;;
 	client)
 		kill_port t 8003
+		;;
+	client-multi)
+		# Kill all self-healing client loops
+		if [[ ${#CLIENT_PIDS[@]} -gt 0 ]]; then
+			for PID in "${CLIENT_PIDS[@]}"; do
+				if kill -0 "$PID" 2>/dev/null; then
+					log "killing client loop PID $PID"
+					kill -TERM "$PID" 2>/dev/null || true
+					sleep 1
+					kill -9 "$PID" 2>/dev/null || true
+				fi
+			done
+		fi
+
+		# Kill all TCP ports used by clients
+		if [[ ${#RESOLVERS[@]} -gt 0 ]]; then
+			BASE_PORT=8003
+			for i in "${!RESOLVERS[@]}"; do
+				PORT=$((BASE_PORT + i))
+				kill_port t "$PORT"
+			done
+		else
+			# fallback to original 8003 if no resolvers set yet
+			kill_port t 8003
+		fi
 		;;
 	esac
 
@@ -85,13 +113,20 @@ client)
 	declare -a RESOLVERS=()
 
 	if [[ -n "$RESOLVER" ]]; then
-		RESOLVERS+=(--resolver "$RESOLVER")
+		IFS=',' read -r -a ips <<< "$RESOLVER"
+		for ip in "${ips[@]}"; do
+			RESOLVERS+=(--resolver "$ip")
+		done
 	else
 		while read -r ip; do
 			RESOLVERS+=(--resolver "$ip")
 		done < <(
 			grep -i slipstream ../scripts/data/RESULTS.txt |
-				grep -Po '\d+\.\d+\.\d+\.\d{1,3} | sort -u | shuf'
+				awk -F'|' '{gsub(/ /,"",$0); print $2 "|" $3}' |
+				sed 's/total=//;s/s.*//' |
+				sort -n -t'|' -k2 |
+				head -n "$INSTANCES" |
+				awk -F'|' '{print $1}'
 		)
 	fi
 
@@ -115,6 +150,61 @@ client)
 		sleep 1
 		kill -9 "$SLIP_PID" 2>/dev/null || true
 	done
+	;;
+
+client-multi)
+	declare -a RESOLVERS=()
+
+	if [[ -n "$RESOLVER" ]]; then
+		RESOLVERS+=("$RESOLVER")
+	else
+		mapfile -t RESOLVERS < <(
+			grep -i Slipstream ../scripts/data/RESULTS.txt |
+				awk -F'|' '{gsub(/ /,"",$0); print $2 "|" $3}' |
+				sed 's/total=//;s/s.*//' |
+				sort -n -t'|' -k2 |
+				head -n "$INSTANCES" |
+				awk -F'|' '{print $1}'
+		)
+	fi
+
+	if [[ ${#RESOLVERS[@]} -eq 0 ]]; then
+		log "No resolvers found in RESULTS.txt"
+		exit 1
+	fi
+
+	BASE_PORT=8003
+
+	log "Starting top ${#RESOLVERS[@]} slipstream clients | DOMAIN: $DOMAIN | TIMEOUT: ${TIMEOUT} | RESOLVERS: ${RESOLVERS[*]}"
+
+	## Run multiple instances of Splitstream-client
+	for i in "${!RESOLVERS[@]}"; do
+		RES="${RESOLVERS[$i]}"
+		PORT=$((BASE_PORT + i))
+		(
+			# Self-healing loop per client
+			while true; do
+				kill_port t "$PORT"
+				log "Starting client on port $PORT using resolver $RES"
+				./slipstream-client \
+					--tcp-listen-port "$PORT" \
+					--domain "$DOMAIN" \
+					--keep-alive-interval 10 \
+					--congestion-control bbr \
+					--resolver "$RES" &
+
+				CLIENT_PID=$!
+				log "Client PID $CLIENT_PID started on port $PORT"
+				wait "$CLIENT_PID" || true
+				log "Client PID $CLIENT_PID exited on port $PORT, restarting..."
+				sleep $((RANDOM % 10 + 1))
+			done
+		) &
+		LOOP_PID=$!
+		CLIENT_PIDS+=("$LOOP_PID")
+	done
+
+	wait
 	;;
 
 *)
