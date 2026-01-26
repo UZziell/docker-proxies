@@ -10,6 +10,8 @@ services:
       - "../certbot/certbot-etc/:/app/cert"
     restart: unless-stopped
     network_mode: host
+    cap_add:
+      - NET_ADMIN # for wireguard compatibility
     # ports:
     #   - 80:80
     #   - 443:443

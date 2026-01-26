@@ -1,0 +1,64 @@
+services:
+  server:
+    image: bashsiz/slipstream-rust:latest
+    container_name: slipstream-server
+    volumes:
+      - ./data:/var/lib/slipstream
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      RUST_LOG: INFO
+    entrypoint:
+      - slipstream-server
+      - --dns-listen-port
+      - ${SLIPSTREAM_PORT:-53}
+      - --cert
+      - /var/lib/slipstream/cert.pem
+      - --key
+      - /var/lib/slipstream/key.pem
+      - --max-connections
+      - ${SLIPSTREAM_SERVER_MAX_CONNECTIOINS:-256}
+      - --target-address
+      - 127.0.0.1:${SLIPSTREAM_SERVER_TARGET_PORT}
+      - --domain
+      - ${SLIPSTREAM_NAMESERVER}
+    restart: always
+    network_mode: host
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "1"
+
+  client:
+    image: bashsiz/slipstream-rust:latest
+    container_name: slipstream-client
+    volumes:
+      - ./data:/var/lib/slipstream
+    environment:
+      RUST_LOG: INFO
+    entrypoint:
+      - slipstream-client
+      - --dns-listen-port
+      - ${SLIPSTREAM_CLIENT_LISTEN_PORT}
+      - --keep-alive-interval
+      - "10"
+      - --congestion-control
+      - bbr
+      - --domain
+      - ${SLIPSTREAM_NAMESERVER}
+      - --resolver
+      - ${SLIPSTREAM_CLIENT_RESOLVER_ADDRESS}
+    restart: always
+    network_mode: host
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "1"
