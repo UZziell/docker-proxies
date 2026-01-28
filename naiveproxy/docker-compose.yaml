@@ -1,10 +1,10 @@
 services:
   server:
-    image: pocat/naiveproxy:${NAIVEPROXY_SERVER_IMAGE_TAG:-latest}
+    image: pocat/naiveproxy${NAIVEPROXY_SERVER_IMAGE_TAG:-:latest}
     container_name: naiveproxy-server
     volumes:
       - "./Caddyfile:/etc/naiveproxy/Caddyfile"
-      - "./storage:/root/.local/share/caddy"
+      - "./data:/root/.local/share/caddy"
     environment:
       NAIVEPROXY_DOMAIN: ${NAIVEPROXY_DOMAIN}
       NAIVEPROXY_USERNAME: ${NAIVEPROXY_USERNAME}
@@ -29,7 +29,7 @@ services:
         max-file: "1"
 
   client:
-    image: ${IMAGE_REGISTRY}pocat/naiveproxy:${NAIVEPROXY_CLIENT_IMAGE_TAG:-client}
+    image: ${IMAGE_REGISTRY}pocat/naiveproxy${NAIVEPROXY_CLIENT_IMAGE_TAG:-:client}
     container_name: naiveproxy-client
     command:
       - /usr/bin/naive

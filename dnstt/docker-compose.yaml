@@ -57,7 +57,7 @@ services:
       context: .
       args:
         SERVER_OR_CLIENT: client
-        IMAGE_REGISTRY: docker.arvancloud.ir/
+        # IMAGE_REGISTRY: docker.arvancloud.ir/
     container_name: dnstt-client
     volumes:
       - ./data:/var/lib/dnstt
