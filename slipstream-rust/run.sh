@@ -95,7 +95,7 @@ server)
 
 		log "running server | Domain: $DOMAIN"
 		timeout "$TIMEOUT" \
-			./slipstream-server \
+			./bin/slipstream-server \
 			--dns-listen-port 53 \
 			--target-address 127.0.0.1:2080 \
 			--domain "$DOMAIN" \
@@ -134,7 +134,7 @@ client)
 		kill_port t 8003
 
 		log "running client | DOMAIN: $DOMAIN | TIMEOUT: ${TIMEOUT} | RESOLVERS: ${RESOLVERS[*]}"
-		./slipstream-client \
+		./bin/slipstream-client \
 			--tcp-listen-port 8003 \
 			--domain "$DOMAIN" \
 			--keep-alive-interval 30 \
@@ -186,7 +186,7 @@ client-multi)
 			while true; do
 				kill_port t "$PORT"
 				log "Starting client on port $PORT using resolver $RES"
-				./slipstream-client \
+				./bin/slipstream-client \
 					--tcp-listen-port "$PORT" \
 					--domain "$DOMAIN" \
 					--keep-alive-interval 10 \

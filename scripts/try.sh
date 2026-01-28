@@ -17,8 +17,8 @@ export SOCKS_USER_PASS=
 export DATA_DIR="./data"
 export WORKING_DNS_FILE="./${DATA_DIR}/dns-working.txt"
 export RESULTS_FILE="./${DATA_DIR}/RESULTS.txt"
-export SLIPSTREAM_PATH="../slipstream-rust"
-export DNSTT_PATH="../dnstt"
+export SLIPSTREAM_PATH="../slipstream-rust/bin"
+export DNSTT_PATH="../dnstt/bin"
 export TIMEOUT=20
 export CURL_TIMEOUT=10
 
