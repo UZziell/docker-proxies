@@ -5,7 +5,7 @@
 		level INFO
 	}
 	servers :443 {
-		protocols h1 h2 h3
+		protocols h1 h2 #h3
 	}
 
 	order forward_proxy before reverse_proxy
@@ -16,7 +16,7 @@
 		basic_auth {$NAIVEPROXY_USERNAME} {$NAIVEPROXY_PASSWORD}
 		hide_ip
 		hide_via
-		probe_resistance
+		probe_resistance {$NAIVEPROXY_DECODY_DOMAIN}
 	}
 	file_server {
 		root /var/www/html
