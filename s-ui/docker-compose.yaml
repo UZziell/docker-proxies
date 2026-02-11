@@ -1,11 +1,11 @@
 services:
   s-ui:
-    image: ghcr.io/alireza0/s-ui:v1.3.7
+    image: ghcr.io/alireza0/s-ui:${IMAGE_TAG:-v1.3.9}
     environment:
       - SUI_LOG_LEVEL=${SUI_LOG_LEVEL:-info}
       - SUI_DEBUG=${SUI_DEBUG:-false}
     volumes:
-      - "./data/db-${NODE_NAME:-}:/app/db"
+      - "./data/db-${NODE_NAME:-default}:/app/db"
       - "../singbox/geodata:/app/geodata"
       - "../certbot/certbot-etc/:/app/cert"
     restart: unless-stopped
