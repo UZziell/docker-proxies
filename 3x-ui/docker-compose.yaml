@@ -1,9 +1,9 @@
 services:
   3x-ui:
-    image: ghcr.io/mhsanaei/3x-ui:v2.8.5
+    image: ghcr.io/mhsanaei/3x-ui:${IMAGE_TAG:-v2.8.9}
     restart: unless-stopped
     volumes:
-      - ./data/db-${NODE_NAME:-}:/etc/x-ui/db
+      - ./data/db-${NODE_NAME:-default}:/etc/x-ui/db
       - ../certbot/certbot-etc/:/etc/x-ui/certs
     environment:
       XUI_LOG_LEVEL: info
