@@ -104,7 +104,9 @@ test_resolver() {
 					-o /dev/null -s \
 					-w "total=%{time_total}s | speed_download=%{speed_download}B/s speed_upload=%{speed_upload}B/s size_download=%{size_download}B" \
 					http://icanhazip.com 2>/dev/null); then
-					printf "%-8s | %-15s | %s\n" "Slipstream" "$DNS" "$CURL_STATS" >>"$RESULTS_FILE"
+					if ! grep -qw "$DNS" "$RESULTS_FILE"; then
+						printf "%-8s | %-15s | %s\n" "Slipstream" "$DNS" "$CURL_STATS" >>"$RESULTS_FILE"
+					fi
 					log_status "✅ Slipstream Working"
 				fi
 			fi
@@ -125,7 +127,9 @@ test_resolver() {
 					-o /dev/null -s \
 					-w "total=%{time_total}s | speed_download=%{speed_download}B/s speed_upload=%{speed_upload}B/s size_download=%{size_download}B" \
 					http://icanhazip.com 2>/dev/null); then
-					printf "%-8s | %-15s | %s\n" "DNSTT" "$DNS" "$CURL_STATS" >>"$RESULTS_FILE"
+					if ! grep -qw "$DNS" "$RESULTS_FILE"; then
+						printf "%-8s | %-15s | %s\n" "DNSTT" "$DNS" "$CURL_STATS" >>"$RESULTS_FILE"
+					fi
 					log_status "✅ DNSTT Working"
 				fi
 			fi
@@ -154,6 +158,6 @@ cat "$WORKING_DNS_FILE" | parallel \
 
 echo -e "\n[*] Testing Complete."
 echo "[*] Total Successes: $(cat "$RESULTS_FILE" | grep -cv 'INFO |')"
-cat "$RESULTS_FILE"
+cat "$RESULTS_FILE" | grep -i "$TEST_MODE" | awk -F'|' '{gsub(/ /,"",$0); print $2 "|" $3}' | sed 's/total=//;s/s.*//' | sort -n -t'|' -k2
 
 echo "INFO | TEST END TIME: $(date +%FT%H:%M:%S)" >>"$RESULTS_FILE"
