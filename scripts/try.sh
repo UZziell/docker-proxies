@@ -18,7 +18,7 @@ export DATA_DIR="./data"
 export WORKING_DNS_FILE="./${DATA_DIR}/dns-working.txt"
 export RESULTS_FILE="./${DATA_DIR}/RESULTS.txt"
 export SLIPSTREAM_PATH="../slipstream-rust/bin"
-export DNSTT_PATH="../dnstt/bin"
+export DNSTT_PATH="../dnstt"
 export TIMEOUT=20
 export CURL_TIMEOUT=10
 
@@ -117,7 +117,7 @@ test_resolver() {
 		# 3.2 Run DNSTT in background
 		local PORT_TT=$((BASE_PORT + JOB_ID + 1000)) # Use a different offset to avoid collision
 		(
-			timeout $TIMEOUT "$DNSTT_PATH/dnstt-client-linux-amd64" \
+			timeout $TIMEOUT "$DNSTT_PATH/bin/dnstt-client-linux-amd64" \
 				-udp "$DNS:53" -utls Chrome -pubkey-file "$DNSTT_PATH/data/server.pub" \
 				"${DNSTT_DOMAIN}" "127.0.0.1:$PORT_TT" >/dev/null 2>&1 &
 			local PID=$!
