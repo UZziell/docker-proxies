@@ -8,11 +8,9 @@ export JOBS="${1:-20}"
 export TEST_MODE="${2:-dnstt}"
 export DNSTT_DOMAIN="${3}"
 export SLIPSTREAM_DOMAIN="${3}"
-export DNS_FILE="${4:-./dns-ir-extended.txt}"
+export SLIP_PLUS="${4:-}"
+export DNS_FILE="${5:-./dns-ir-extended.txt}"
 
-export DNSTT_TEST_DOMAIN=
-export SLIPSTREAM_TEST_DOMAIN=
-export SOCKS_USER_PASS=
 
 export DATA_DIR="./data"
 export WORKING_DNS_FILE="./${DATA_DIR}/dns-working.txt"
@@ -93,7 +91,7 @@ test_resolver() {
 		# 3.1 Run Slipstream in background
 		local PORT_SLIP=$((BASE_PORT + JOB_ID))
 		(
-			timeout $TIMEOUT "$SLIPSTREAM_PATH/slipstream-client" \
+			timeout $TIMEOUT "$SLIPSTREAM_PATH/slipstream-client${SLIP_PLUS}" \
 				--tcp-listen-port "$PORT_SLIP" --resolver "$DNS" \
 				--domain "${SLIPSTREAM_DOMAIN}" --keep-alive-interval 30 >/dev/null 2>&1 &
 			local PID=$!
@@ -146,8 +144,8 @@ export -f test_resolver
 
 # Execution
 echo "[*] Starting deep tests using $JOBS parallel threads..."
-echo "[*] Test mode: $TEST_MODE | Test Domain: ${TEST_DOMAIN}"
-echo "INFO | TEST START TIME: $(date +%FT%H:%M:%S) | DOMAIN: ${TEST_DOMAIN}" >>"$RESULTS_FILE"
+echo "[*] Test mode: $TEST_MODE $SLIP_PLUS | Test Domain: ${TEST_DOMAIN}"
+echo "INFO | TEST START TIME: $(date +%FT%H:%M:%S) | DOMAIN: ${TEST_DOMAIN} $SLIP_PLUS" >>"$RESULTS_FILE"
 
 cat "$WORKING_DNS_FILE" | parallel \
 	--bar \

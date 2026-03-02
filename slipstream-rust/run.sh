@@ -5,7 +5,10 @@ SERVER_OR_CLIENT="${1:-}"
 DOMAIN="${2:-}"
 RESOLVER="${3:-}"
 TIMEOUT="${4:-60}"
-INSTANCES="${5:-5}"
+SLIP_PLUS="${5:-}"
+INSTANCES="${6:-5}"
+
+export BASE_PORT=8003
 
 SLIP_PID=""
 declare -a CLIENT_PIDS=()
@@ -54,7 +57,7 @@ cleanup() {
 		kill_port u 53
 		;;
 	client)
-		kill_port t 8003
+		kill_port t "${BASE_PORT}"
 		;;
 	client-multi)
 		# Kill all self-healing client loops
@@ -71,14 +74,13 @@ cleanup() {
 
 		# Kill all TCP ports used by clients
 		if [[ ${#RESOLVERS[@]} -gt 0 ]]; then
-			BASE_PORT=8003
 			for i in "${!RESOLVERS[@]}"; do
 				PORT=$((BASE_PORT + i))
 				kill_port t "$PORT"
 			done
 		else
-			# fallback to original 8003 if no resolvers set yet
-			kill_port t 8003
+			# fallback to original BASE_PORT if no resolvers set yet
+			kill_port t "${BASE_PORT}"
 		fi
 		;;
 	esac
@@ -95,7 +97,7 @@ server)
 
 		log "running server | Domain: $DOMAIN"
 		timeout "$TIMEOUT" \
-			./bin/slipstream-server \
+			"./bin/slipstream-server${SLIP_PLUS}" \
 			--dns-listen-port 53 \
 			--target-address 127.0.0.1:2080 \
 			--domain "$DOMAIN" \
@@ -131,11 +133,11 @@ client)
 	fi
 
 	while true; do
-		kill_port t 8003
+		kill_port t BASE_PORT
 
 		log "running client | DOMAIN: $DOMAIN | TIMEOUT: ${TIMEOUT} | RESOLVERS: ${RESOLVERS[*]}"
-		./bin/slipstream-client \
-			--tcp-listen-port 8003 \
+		"./bin/slipstream-client${SLIP_PLUS}" \
+			--tcp-listen-port ${BASE_PORT} \
 			--domain "$DOMAIN" \
 			--keep-alive-interval 30 \
 			"${RESOLVERS[@]}" &
@@ -173,8 +175,6 @@ client-multi)
 		exit 1
 	fi
 
-	BASE_PORT=8003
-
 	log "Starting top ${#RESOLVERS[@]} slipstream clients | DOMAIN: $DOMAIN | TIMEOUT: ${TIMEOUT} | RESOLVERS: ${RESOLVERS[*]}"
 
 	## Run multiple instances of Splitstream-client
@@ -186,7 +186,7 @@ client-multi)
 			while true; do
 				kill_port t "$PORT"
 				log "Starting client on port $PORT using resolver $RES"
-				./bin/slipstream-client \
+				"./bin/slipstream-client${SLIP_PLUS}" \
 					--tcp-listen-port "$PORT" \
 					--domain "$DOMAIN" \
 					--keep-alive-interval 10 \
