@@ -8,7 +8,7 @@ TIMEOUT="${4:-60}"
 SLIP_PLUS="${5:-}"
 INSTANCES="${6:-5}"
 
-export BASE_PORT=8003
+export BASE_PORT="${7:-8003}"
 
 SLIP_PID=""
 declare -a CLIENT_PIDS=()
