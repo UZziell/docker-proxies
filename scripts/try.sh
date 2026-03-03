@@ -18,7 +18,7 @@ export RESULTS_FILE="./${DATA_DIR}/RESULTS.txt"
 export SLIPSTREAM_PATH="../slipstream-rust/bin"
 export DNSTT_PATH="../dnstt"
 export TIMEOUT=20
-export CURL_TIMEOUT=10
+export CURL_TIMEOUT=15
 
 mkdir -p "$DATA_DIR"
 if [[ -s $RESULTS_FILE ]]; then
@@ -100,8 +100,8 @@ test_resolver() {
 				if CURL_STATS=$(curl -m "$CURL_TIMEOUT" -4 \
 					--socks5 socks5h://${SOCKS_USER_PASS}@127.0.0.1:$PORT_SLIP \
 					-o /dev/null -s \
-					-w "total=%{time_total}s | speed_download=%{speed_download}B/s speed_upload=%{speed_upload}B/s size_download=%{size_download}B" \
-					http://icanhazip.com 2>/dev/null); then
+					-w "total=%{time_total}s | speed_download=%{speed_download}B/s | speed_upload=%{speed_upload}B/s | size_download=%{size_download}B" \
+					https://httpbin.org/bytes/10240 2>/dev/null); then
 					if ! grep -qw "$DNS" "$RESULTS_FILE"; then
 						printf "%-8s | %-15s | %s\n" "Slipstream" "$DNS" "$CURL_STATS" >>"$RESULTS_FILE"
 					fi
@@ -123,8 +123,8 @@ test_resolver() {
 				if CURL_STATS=$(curl -m "$CURL_TIMEOUT" -4 \
 					--socks5 socks5h://${SOCKS_USER_PASS}@127.0.0.1:$PORT_TT \
 					-o /dev/null -s \
-					-w "total=%{time_total}s | speed_download=%{speed_download}B/s speed_upload=%{speed_upload}B/s size_download=%{size_download}B" \
-					http://icanhazip.com 2>/dev/null); then
+					-w "total=%{time_total}s | speed_download=%{speed_download}B/s | speed_upload=%{speed_upload}B/s | size_download=%{size_download}B" \
+					https://httpbin.org/bytes/10240 2>/dev/null); then
 					if ! grep -qw "$DNS" "$RESULTS_FILE"; then
 						printf "%-8s | %-15s | %s\n" "DNSTT" "$DNS" "$CURL_STATS" >>"$RESULTS_FILE"
 					fi
@@ -156,6 +156,6 @@ cat "$WORKING_DNS_FILE" | parallel \
 
 echo -e "\n[*] Testing Complete."
 echo "[*] Total Successes: $(cat "$RESULTS_FILE" | grep -cv 'INFO |')"
-cat "$RESULTS_FILE" | grep -i "$TEST_MODE" | awk -F'|' '{gsub(/ /,"",$0); print $2 "|" $3}' | sed 's/total=//;s/s.*//' | sort -n -t'|' -k2
+cat "$RESULTS_FILE" | grep -i "$TEST_MODE" | awk -F'|' '{gsub(/ /,"",$0); print $2 " | "$3" | "$4}' | sed -E 's/(total|speed_download)=//g' | sort -n -t'|' -k2
 
 echo "INFO | TEST END TIME: $(date +%FT%H:%M:%S)" >>"$RESULTS_FILE"
