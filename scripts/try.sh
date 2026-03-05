@@ -143,9 +143,9 @@ test_resolver() {
 export -f test_resolver
 
 # Execution
-echo "[*] Starting deep tests using $JOBS parallel threads..."
+echo "[*] Starting deep tests using $JOBS parallel threads"
 echo "[*] Test mode: $TEST_MODE $SLIP_PLUS | Test Domain: ${TEST_DOMAIN}"
-echo "INFO | TEST START TIME: $(date +%FT%H:%M:%S) | DOMAIN: ${TEST_DOMAIN} $SLIP_PLUS" >>"$RESULTS_FILE"
+echo "INFO | TEST START TIME: $(date +%FT%H:%M:%S) | DOMAIN: ${TEST_DOMAIN} $SLIP_PLUS" | tee -a "$RESULTS_FILE"
 
 cat "$WORKING_DNS_FILE" | parallel \
 	--bar \
