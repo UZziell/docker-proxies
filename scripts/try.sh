@@ -13,7 +13,7 @@ export DNS_FILE="${5:-./dns-ir-extended.txt}"
 
 
 export DATA_DIR="./data"
-export WORKING_DNS_FILE="./${DATA_DIR}/dns-working.txt"
+export WORKING_DNS_FILE="${DATA_DIR}/dns-working.txt"
 export RESULTS_FILE="./${DATA_DIR}/RESULTS.txt"
 export SLIPSTREAM_PATH="../slipstream-rust/bin"
 export DNSTT_PATH="../dnstt"
@@ -57,15 +57,15 @@ if [ -z "$DNS_UTILITY" ]; then
 fi
 
 # DNS Pre-filtering
-set +u
+set +eu
 if ! [ -s "$WORKING_DNS_FILE" ] || [ -s "$4" ] || ! [ -n "$(find "$WORKING_DNS_FILE" -mtime -1)" ]; then
-	echo "[*] Using '$DNS_UTILITY' for pre-filtering responsive DNS servers | DNS TEST DOMAIN: $DNS_TEST_DOMAIN"
+	echo "[*] Using '$DNS_UTILITY' for pre-filtering responsive DNS servers | Parallel: $((JOBS * 2 )) | DNS TEST DOMAIN: $DNS_TEST_DOMAIN"
 	# Filters based on basic response to a known record
-	cat "$DNS_FILE" | parallel -j "${JOBS}" --bar \
+	cat "$DNS_FILE" | parallel -j "$((JOBS * 2))" --bar \
 		"timeout 2 $DNS_UTILITY @{} ${DNS_TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
 	echo "[+] Found $(wc -l <"$WORKING_DNS_FILE") responsive DNS servers."
 fi
-set -u
+set -eu
 
 # Testing Function
 test_resolver() {
