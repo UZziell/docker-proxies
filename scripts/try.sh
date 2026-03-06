@@ -48,6 +48,14 @@ fi
 for cmd in kdig dig drill dog; do
 	if command -v "$cmd" >/dev/null 2>&1; then
 		export DNS_UTILITY="$cmd"
+		case "$DNS_UTILITY" in
+		dig)
+			export DNS_COMMAND_OPTIONS="+short +fail"
+			;;
+		dog)
+			export DNS_COMMAND_OPTIONS="--short"
+			;;
+		esac
 		break
 	fi
 done
@@ -62,7 +70,8 @@ if ! [ -s "$WORKING_DNS_FILE" ] || [ -s "$4" ] || ! [ -n "$(find "$WORKING_DNS_F
 	echo "[*] Using '$DNS_UTILITY' for pre-filtering responsive DNS servers | Parallel: $((JOBS * 2 )) | DNS TEST DOMAIN: $DNS_TEST_DOMAIN"
 	# Filters based on basic response to a known record
 	cat "$DNS_FILE" | parallel -j "$((JOBS * 2))" --bar \
-		"timeout 2 $DNS_UTILITY @{} ${DNS_TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
+		"timeout 2 $DNS_UTILITY $DNS_COMMAND_OPTIONS @{} ${DNS_TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
+		# "timeout 2 $DNS_UTILITY $DNS_COMMAND_OPTIONS @{} ${DNS_TEST_DOMAIN} 2>/dev/null \| grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$' >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
 	echo "[+] Found $(wc -l <"$WORKING_DNS_FILE") responsive DNS servers."
 fi
 set -eu
