@@ -12,6 +12,8 @@ services:
       - slipstream-server
       - --dns-listen-port
       - ${SLIPSTREAM_PORT:-53}
+      - --domain
+      - ${SLIPSTREAM_NAMESERVER}
       - --cert
       - /var/lib/slipstream/cert.pem
       - --key
@@ -20,8 +22,6 @@ services:
       - ${SLIPSTREAM_SERVER_MAX_CONNECTIOINS:-256}
       - --target-address
       - 127.0.0.1:${SLIPSTREAM_SERVER_TARGET_PORT}
-      - --domain
-      - ${SLIPSTREAM_NAMESERVER}
     restart: always
     network_mode: host
     privileged: true
