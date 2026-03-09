@@ -14,15 +14,17 @@ export SOCKS_USER_PASS=
 
 export DATA_DIR="./data"
 export WORKING_DNS_FILE="${DATA_DIR}/dns-working.txt"
-export RESULTS_FILE="./${DATA_DIR}/RESULTS.txt"
+export RESULTS_FILE="${DATA_DIR}/RESULTS.txt"
 export SLIPSTREAM_PATH="../slipstream-rust/bin"
 export DNSTT_PATH="../dnstt"
 export TIMEOUT=20
 export CURL_TIMEOUT=15
+export DNS_REQUEST_TIMEOUT=5
 
 mkdir -p "$DATA_DIR"
-if [[ -s $RESULTS_FILE ]]; then
-	mv $RESULTS_FILE "${RESULTS_FILE}.$(date +%FT%H%M%S)"
+if [[ -s $RESULTS_FILE ]] && [[ $(wc -l < $RESULTS_FILE) -gt 2 ]]; then
+	NEW_NAME=$(cat "$RESULTS_FILE" | grep "TEST START TIME" | grep -Po '[0-9]{4}[0-9T\-\:]+' | tr ':' '')
+	mv "$RESULTS_FILE" "$NEW_NAME"
 fi
 
 # Dependency Pre-check
@@ -43,14 +45,16 @@ for cmd in kdig dig drill dog; do
 		case "$DNS_UTILITY" in
 		dig)
 			export DNS_COMMAND_OPTIONS="+short +fail"
+			export DNS_COMMAND_NS_QUERY="-t NS"
 			if [ -z "$DNS_TEST_DOMAIN" ]; then
-				DNS_TEST_DOMAIN=$(dig +short +fail "${TEST_DOMAIN}" NS)
+				DNS_TEST_DOMAIN=$(dig "${DNS_COMMAND_NS_QUERY}" "${DNS_COMMAND_OPTIONS}" "${TEST_DOMAIN}")
 			fi
 			;;
 		dog)
 			export DNS_COMMAND_OPTIONS="--short"
+			export DNS_COMMAND_NS_QUERY="--type=NS"
 			if [ -z "$DNS_TEST_DOMAIN" ]; then
-				DNS_TEST_DOMAIN=$(dog --type=NS "${DNS_COMMAND_OPTIONS}" "${TEST_DOMAIN}")
+				DNS_TEST_DOMAIN=$(dog "${DNS_COMMAND_NS_QUERY}" "${DNS_COMMAND_OPTIONS}" "${TEST_DOMAIN}")
 			fi
 			;;
 		esac
@@ -86,8 +90,9 @@ if ! [ -s "$WORKING_DNS_FILE" ] || [ -s "$4" ] || ! [ -n "$(find "$WORKING_DNS_F
 	echo "[*] Using '$DNS_UTILITY' for pre-filtering responsive DNS servers | Parallel: $((JOBS * 2)) | DNS TEST DOMAIN: $DNS_TEST_DOMAIN"
 	# Filters based on basic response to a known record
 	cat "$DNS_FILE" | parallel -j "$((JOBS * 2))" --bar \
-		"timeout 2 $DNS_UTILITY $DNS_COMMAND_OPTIONS @{} ${DNS_TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
-	# "timeout 2 $DNS_UTILITY $DNS_COMMAND_OPTIONS @{} ${DNS_TEST_DOMAIN} 2>/dev/null \| grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$' >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
+		"timeout $DNS_REQUEST_TIMEOUT $DNS_UTILITY $DNS_COMMAND_OPTIONS @{} ${DNS_TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
+		# "timeout $DNS_REQUEST_TIMEOUT $DNS_UTILITY $DNS_COMMAND_OPTIONS @{} ${DNS_TEST_DOMAIN} 2>/dev/null \| grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$' >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
+		# "timeout $DNS_REQUEST_TIMEOUT $DNS_UTILITY $DNS_COMMAND_NS_QUERY $DNS_COMMAND_OPTIONS @{} ${TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
 	echo "[+] Found $(wc -l <"$WORKING_DNS_FILE") responsive DNS servers."
 fi
 set -eu
@@ -177,7 +182,7 @@ echo "[*] Starting deep tests using $JOBS parallel threads"
 echo "[*] Test mode: $TEST_MODE $SLIP_PLUS | Test Domain: ${TEST_DOMAIN}"
 echo "INFO | TEST START TIME: $(date +%FT%H:%M:%S) | DOMAIN: ${TEST_DOMAIN} $SLIP_PLUS" | tee -a "$RESULTS_FILE"
 
-cat "$WORKING_DNS_FILE" | parallel \
+cat "$WORKING_DNS_FILE" | shuf | parallel \
 	--bar \
 	--tag \
 	--line-buffer \
