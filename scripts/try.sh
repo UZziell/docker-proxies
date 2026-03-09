@@ -117,8 +117,11 @@ test_resolver() {
 		local PORT_SLIP=$((BASE_PORT + JOB_ID))
 		(
 			timeout $TIMEOUT "$SLIPSTREAM_PATH/slipstream-client${SLIP_PLUS}" \
-				--tcp-listen-port "$PORT_SLIP" --resolver "$DNS" \
-				--domain "${TEST_DOMAIN}" --keep-alive-interval 30 >/dev/null 2>&1 &
+				--tcp-listen-port "$PORT_SLIP" \
+				--resolver "$DNS" \
+				--keep-alive-interval 30 \
+				--congestion-control bbr \
+				--domain "${TEST_DOMAIN}" >/dev/null 2>&1 &
 			local PID=$!
 			if wait_for_port $PORT_SLIP; then
 
@@ -141,7 +144,9 @@ test_resolver() {
 		local PORT_TT=$((BASE_PORT + JOB_ID + 1000)) # Use a different offset to avoid collision
 		(
 			timeout $TIMEOUT "$DNSTT_PATH/bin/dnstt-client-linux-amd64" \
-				-udp "$DNS:53" -utls Chrome -pubkey-file "$DNSTT_PATH/data/server.pub" \
+				-udp "$DNS:53" \
+				-utls Chrome \
+				-pubkey-file "$DNSTT_PATH/data/server.pub" \
 				"${TEST_DOMAIN}" "127.0.0.1:$PORT_TT" >/dev/null 2>&1 &
 			local PID=$!
 			if wait_for_port $PORT_TT; then

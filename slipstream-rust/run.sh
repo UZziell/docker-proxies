@@ -115,7 +115,7 @@ client)
 	declare -a RESOLVERS=()
 
 	if [[ -n "$RESOLVER" ]]; then
-		IFS=',' read -r -a ips <<< "$RESOLVER"
+		IFS=',' read -r -a ips <<<"$RESOLVER"
 		for ip in "${ips[@]}"; do
 			RESOLVERS+=(--resolver "$ip")
 		done
@@ -139,7 +139,8 @@ client)
 		"./bin/slipstream-client${SLIP_PLUS}" \
 			--tcp-listen-port ${BASE_PORT} \
 			--domain "$DOMAIN" \
-			--keep-alive-interval 30 \
+			--keep-alive-interval 100 \
+			--congestion-control bbr \
 			"${RESOLVERS[@]}" &
 
 		SLIP_PID=$!
@@ -189,7 +190,7 @@ client-multi)
 				"./bin/slipstream-client${SLIP_PLUS}" \
 					--tcp-listen-port "$PORT" \
 					--domain "$DOMAIN" \
-					--keep-alive-interval 10 \
+					--keep-alive-interval 100 \
 					--congestion-control bbr \
 					--resolver "$RES" &
 
