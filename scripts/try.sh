@@ -22,9 +22,9 @@ export CURL_TIMEOUT=15
 export DNS_REQUEST_TIMEOUT=5
 
 mkdir -p "$DATA_DIR"
-if [[ -s $RESULTS_FILE ]] && [[ $(wc -l < $RESULTS_FILE) -gt 2 ]]; then
-	NEW_NAME=$(cat "$RESULTS_FILE" | grep "TEST START TIME" | grep -Po '[0-9]{4}[0-9T\-\:]+' | tr -d ':')
-	mv "$RESULTS_FILE" "$NEW_NAME"
+if [[ -s $RESULTS_FILE ]] && grep -qE 'Slipstream|DNSTT' $RESULTS_FILE ; then
+	NAME_POSTFIX=$(cat "$RESULTS_FILE" | grep "TEST START TIME" | grep -Po '[0-9]{4}[0-9T\-\:]+' | tr -d ':' | tail -n1)
+	mv "$RESULTS_FILE" "${RESULTS_FILE}.${NAME_POSTFIX}"
 fi
 
 # Dependency Pre-check
@@ -87,7 +87,7 @@ fi
 # DNS Pre-filtering
 set +eu
 if ! [ -s "$WORKING_DNS_FILE" ] || [ -s "$4" ] || ! [ -n "$(find "$WORKING_DNS_FILE" -mtime -1)" ]; then
-	echo "[*] Using '$DNS_UTILITY' for pre-filtering responsive DNS servers | Parallel: $((JOBS * 2)) | DNS TEST DOMAIN: $DNS_TEST_DOMAIN"
+	echo "[*] Using '$DNS_UTILITY' for filtering responsive DNS servers | DNS FILE: ${DNS_FILE}($(wc -l < "$DNS_FILE")) | Parallel: $((JOBS * 2)) | DNS TEST DOMAIN: $DNS_TEST_DOMAIN"
 	# Filters based on basic response to a known record
 	cat "$DNS_FILE" | parallel -j "$((JOBS * 2))" --bar \
 		"timeout $DNS_REQUEST_TIMEOUT $DNS_UTILITY $DNS_COMMAND_OPTIONS @{} ${DNS_TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
