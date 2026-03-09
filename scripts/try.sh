@@ -23,7 +23,7 @@ export DNS_REQUEST_TIMEOUT=5
 
 mkdir -p "$DATA_DIR"
 if [[ -s $RESULTS_FILE ]] && [[ $(wc -l < $RESULTS_FILE) -gt 2 ]]; then
-	NEW_NAME=$(cat "$RESULTS_FILE" | grep "TEST START TIME" | grep -Po '[0-9]{4}[0-9T\-\:]+' | tr ':' '')
+	NEW_NAME=$(cat "$RESULTS_FILE" | grep "TEST START TIME" | grep -Po '[0-9]{4}[0-9T\-\:]+' | tr -d ':')
 	mv "$RESULTS_FILE" "$NEW_NAME"
 fi
 
