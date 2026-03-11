@@ -8,6 +8,7 @@ TIMEOUT="${4:-60}"
 SLIP_PLUS="${5:-}"
 INSTANCES="${6:-5}"
 
+export SLIPSTREAM_KEEP_ALIVE_INTERVAL_MS=30000
 export BASE_PORT="${7:-8003}"
 
 SLIP_PID=""
@@ -139,12 +140,12 @@ client)
 		"./bin/slipstream-client${SLIP_PLUS}" \
 			--tcp-listen-port ${BASE_PORT} \
 			--domain "$DOMAIN" \
-			--keep-alive-interval 100 \
+			--keep-alive-interval ${SLIPSTREAM_KEEP_ALIVE_INTERVAL_MS} \
 			--congestion-control bbr \
 			"${RESOLVERS[@]}" &
 
 		SLIP_PID=$!
-		log "$SLIP_PID running! sleeping for $TIMEOUT seconds"
+		# log "$SLIP_PID running! sleeping for $TIMEOUT seconds"
 
 		sleep "$TIMEOUT"
 
@@ -159,7 +160,10 @@ client-multi)
 	declare -a RESOLVERS=()
 
 	if [[ -n "$RESOLVER" ]]; then
-		RESOLVERS+=("$RESOLVER")
+		IFS=',' read -r -a ips <<<"$RESOLVER"
+		for ip in "${ips[@]}"; do
+			RESOLVERS+=("$ip")
+		done
 	else
 		mapfile -t RESOLVERS < <(
 			grep -i Slipstream ../scripts/data/RESULTS.txt |
@@ -190,7 +194,7 @@ client-multi)
 				"./bin/slipstream-client${SLIP_PLUS}" \
 					--tcp-listen-port "$PORT" \
 					--domain "$DOMAIN" \
-					--keep-alive-interval 100 \
+					--keep-alive-interval ${SLIPSTREAM_KEEP_ALIVE_INTERVAL_MS} \
 					--congestion-control bbr \
 					--resolver "$RES" &
 
@@ -209,7 +213,7 @@ client-multi)
 	;;
 
 *)
-	echo "Usage: $0 {server|client} DOMAIN [RESOLVER] [TIMEOUT]"
+	echo "Usage: $0 {server|client|client-multi} DOMAIN [RESOLVERS(comma-seperated)] [TIMEOUT]"
 	exit 1
 	;;
 esac
