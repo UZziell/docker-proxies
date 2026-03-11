@@ -19,7 +19,7 @@ export SLIPSTREAM_PATH="../slipstream-rust/bin"
 export DNSTT_PATH="../dnstt"
 export TIMEOUT=20
 export CURL_TIMEOUT=15
-export DNS_REQUEST_TIMEOUT=5
+export DNS_REQUEST_TIMEOUT=4
 
 mkdir -p "$DATA_DIR"
 if [[ -s $RESULTS_FILE ]] && grep -qE 'Slipstream|DNSTT' $RESULTS_FILE ; then
@@ -67,6 +67,7 @@ print_help() {
 	echo "  ./try.sh [JOBS] [MODE=slip/dnstt] [TEST_DOMAIN] [DNS_TEST_DOMAIN(optional)] [SLIP_PLUS(optional)] [DNS_FILE(optional)]"
 	echo "Example: "
 	echo "  ./try.sh 50 slip t.example.com ns.example.com '-plus' ./dns-custom.txt"
+	echo "  ./try.sh 50 dnstt t.example.com ns2.example.com '' ./dns-custom.txt"
 }
 
 # Arguments check
