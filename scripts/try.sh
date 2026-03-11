@@ -22,14 +22,15 @@ export CURL_TIMEOUT=15
 export DNS_REQUEST_TIMEOUT=4
 
 mkdir -p "$DATA_DIR"
-if [[ -s $RESULTS_FILE ]] && grep -qE 'Slipstream|DNSTT' $RESULTS_FILE ; then
+if [[ -s $RESULTS_FILE ]] && grep -qE 'Slipstream|DNSTT' $RESULTS_FILE; then
 	NAME_POSTFIX=$(cat "$RESULTS_FILE" | grep "TEST START TIME" | grep -Po '[0-9]{4}[0-9T\-\:]+' | tr -d ':' | tail -n1)
 	mv "$RESULTS_FILE" "${RESULTS_FILE}.${NAME_POSTFIX}"
 fi
 
-# Dependency Pre-check
+check_dependencies() {
+	# Check Parallel
 if ! command -v parallel >/dev/null 2>&1; then
-	echo "[!] GNU Parallel not found. Attempting to install..."
+		echo "[WARNING] GNU Parallel not found. Attempting to install..."
 	if command -v apt-get >/dev/null 2>&1; then
 		sudo apt-get update && sudo apt-get install -y parallel
 	else
@@ -38,7 +39,7 @@ if ! command -v parallel >/dev/null 2>&1; then
 	fi
 fi
 
-# DNS Utility Selection
+	# Check DNS Utility
 for cmd in kdig dig drill dog; do
 	if command -v "$cmd" >/dev/null 2>&1; then
 		export DNS_UTILITY="$cmd"
@@ -61,6 +62,7 @@ for cmd in kdig dig drill dog; do
 		break
 	fi
 done
+}
 
 print_help() {
 	echo "Usage:"
@@ -70,7 +72,7 @@ print_help() {
 	echo "  ./try.sh 50 dnstt t.example.com ns2.example.com '' ./dns-custom.txt"
 }
 
-# Arguments check
+check_arguments() {
 if [ -z "$DNS_UTILITY" ]; then
 	echo "[FATAL] No DNS utility found (dig, kdig, drill, or dog). Install 'dnsutils' or 'knot-dnsutils'."
 	print_help
@@ -84,30 +86,17 @@ elif [[ ! "$DNS_TEST_DOMAIN" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\.?$ ]]; then
 	print_help
 	exit 1
 fi
+}
 
-# DNS Pre-filtering
-set +eu
-if ! [ -s "$WORKING_DNS_FILE" ] || [ -s "$4" ] || ! [ -n "$(find "$WORKING_DNS_FILE" -mtime -1)" ]; then
-	echo "[*] Using '$DNS_UTILITY' for filtering responsive DNS servers | DNS FILE: ${DNS_FILE}($(wc -l < "$DNS_FILE")) | Parallel: $((JOBS * 2)) | DNS TEST DOMAIN: $DNS_TEST_DOMAIN"
-	# Filters based on basic response to a known record
-	cat "$DNS_FILE" | parallel -j "$((JOBS * 2))" --bar \
-		"timeout $DNS_REQUEST_TIMEOUT $DNS_UTILITY $DNS_COMMAND_OPTIONS @{} ${DNS_TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
-		# "timeout $DNS_REQUEST_TIMEOUT $DNS_UTILITY $DNS_COMMAND_OPTIONS @{} ${DNS_TEST_DOMAIN} 2>/dev/null \| grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$' >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
-		# "timeout $DNS_REQUEST_TIMEOUT $DNS_UTILITY $DNS_COMMAND_NS_QUERY $DNS_COMMAND_OPTIONS @{} ${TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
-	echo "[+] Found $(wc -l <"$WORKING_DNS_FILE") responsive DNS servers."
-fi
-set -eu
-
-# Testing Function
-test_resolver() {
+test_dns_tunnel() {
 	local DNS=$1
 	local JOB_ID=$2
-	local BASE_PORT=8000
+	local BASE_PORT=9000
 
-	# helper for logging
+	# log helper
 	log_status() { echo -e "$1" >&2; }
 
-	# Helper to wait for a port to open
+	# wait for port helper
 	wait_for_port() {
 		local port=$1
 		for i in {1..30}; do
@@ -176,22 +165,38 @@ test_resolver() {
 	wait
 }
 
-export -f test_resolver
+## Main ##
+check_dependencies
+check_arguments
+
+# test dns resolvers
+set +eu
+if ! [ -s "$WORKING_DNS_FILE" ] || [ -s "$4" ] || ! [ -n "$(find "$WORKING_DNS_FILE" -mtime -1)" ]; then
+	echo "[INFO] Using '$DNS_UTILITY' for filtering responsive DNS resolvers | DNS FILE: ${DNS_FILE}($(wc -l <"$DNS_FILE")) | Parallel: $((JOBS * 2)) | DNS TEST DOMAIN: $DNS_TEST_DOMAIN"
+	cat "$DNS_FILE" | parallel -j "$((JOBS * 2))" --bar \
+		"timeout $DNS_REQUEST_TIMEOUT $DNS_UTILITY $DNS_COMMAND_OPTIONS @{} ${DNS_TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
+	# "timeout $DNS_REQUEST_TIMEOUT $DNS_UTILITY $DNS_COMMAND_OPTIONS @{} ${DNS_TEST_DOMAIN} 2>/dev/null \| grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$' >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
+	# "timeout $DNS_REQUEST_TIMEOUT $DNS_UTILITY $DNS_COMMAND_NS_QUERY $DNS_COMMAND_OPTIONS @{} ${TEST_DOMAIN} >/dev/null 2>&1 && echo {}" >>"$WORKING_DNS_FILE"
+	echo "[INFO] Found $(wc -l <"$WORKING_DNS_FILE") responsive DNS resolvers."
+fi
+set -eu
+
+export -f test_dns_tunnel
 
 # Execution
-echo "[*] Starting deep tests using $JOBS parallel threads"
-echo "[*] Test mode: $TEST_MODE $SLIP_PLUS | Test Domain: ${TEST_DOMAIN}"
-echo "INFO | TEST START TIME: $(date +%FT%H:%M:%S) | DOMAIN: ${TEST_DOMAIN} $SLIP_PLUS" | tee -a "$RESULTS_FILE"
+echo "[INFO] Starting dns tunnel tests using $JOBS parallel threads"
+echo "[INFO] Test mode: $TEST_MODE $SLIP_PLUS | Test Domain: ${TEST_DOMAIN}"
+echo "[INFO] TEST START TIME: $(date +%FT%H:%M:%S) | DOMAIN: ${TEST_DOMAIN} $SLIP_PLUS" | tee -a "$RESULTS_FILE"
 
 cat "$WORKING_DNS_FILE" | shuf | parallel \
 	--bar \
 	--tag \
 	--line-buffer \
 	-j "$JOBS" \
-	test_resolver {} {#}
+	test_dns_tunnel {} {#}
 
-echo -e "\n[*] Testing Complete."
-echo "[*] Total Successes: $(cat "$RESULTS_FILE" | grep -cv 'INFO |')"
+echo -e "\n[INFO] Testing Complete."
+echo "[INFO] Total Successes: $(cat "$RESULTS_FILE" | grep -cv 'INFO |')"
 cat "$RESULTS_FILE" | grep -i "$TEST_MODE" | awk -F'|' '{gsub(/ /,"",$0); print $2 " | "$3" | "$4}' | sed -E 's/(total|speed_download)=//g' | sort -n -t'|' -k2
 
-echo "INFO | TEST END TIME: $(date +%FT%H:%M:%S)" >>"$RESULTS_FILE"
+echo "[INFO] TEST END TIME: $(date +%FT%H:%M:%S)" >>"$RESULTS_FILE"
