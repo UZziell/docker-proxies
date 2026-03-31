@@ -202,7 +202,7 @@ export -f test_dns_tunnel
 set +eu
 if ! [ -s "$RESPONSIVE_DNS_FILE" ] || [ -s "$4" ] || ! [ -n "$(find "$RESPONSIVE_DNS_FILE" -mtime -1)" ]; then
 	echo "[INFO] Resolver Test (filtering responsive DNS resolvers) | Hostname: $HOSTNAME | DNS_UTILITY: '$DNS_UTILITY' | DNS FILE: ${DNS_FILE}($(wc -l <"$DNS_FILE")) | Parallel Jobs: $((PARALLEL_JOBS * 2)) | TEST RESOLVER DOMAIN: $TEST_RESOLVER_DOMAIN"
-	cat "$DNS_FILE" | shuf |
+	sort -u "$DNS_FILE" | shuf |
 		parallel --bar -j "$((PARALLEL_JOBS * 2))" test_resolver {} "${DNS_COMMAND_OPTIONS[@]}" "${DNS_COMMAND_NS_QUERY[@]}"
 
 	if [[ ! -s "$RESPONSIVE_DNS_FILE" ]]; then
@@ -215,7 +215,7 @@ set -eu
 
 # test dns tunnel
 echo "[INFO] DNS Tunnel Test | START TIME: $(date +%FT%H:%M:%S) | Hostname: $HOSTNAME | Test mode: ${TEST_MODE}${SLIP_PLUS} | Parallel Jobs: $PARALLEL_JOBS | Test Domain: ${TEST_TUNNEL_DOMAIN}" | tee -a "$RESULTS_FILE"
-cat "$RESPONSIVE_DNS_FILE" | shuf |
+sort -u "$RESPONSIVE_DNS_FILE" | shuf |
 	parallel --bar --tag -j "$PARALLEL_JOBS" test_dns_tunnel {} {#}
 
 echo -e "\n[INFO] Test Complete. Total Successes: $(cat $RESULTS_FILE | grep -cv '[INFO]')"
