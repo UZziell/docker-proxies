@@ -1,0 +1,32 @@
+port=53
+user=root
+group=root
+listen-address=0.0.0.0
+bind-interfaces
+
+## Upstream Rules ##
+# Slipstream-rust - Port 531
+server=/a.example.com/127.0.0.1#531
+# dnstt - Port 532
+server=/b.example.com/127.0.0.1#532
+# noizDNS(Slipnet) - Port 5300
+server=/c.example.com/127.0.0.1#5300
+#  MasterDnsVPN - 534
+server=/d.example.com/127.0.0.1#534
+
+# General
+no-resolv
+stop-dns-rebind
+
+# Logging
+#log-queries
+#log-debug
+
+# Limits
+dns-forward-max=10000
+max-tcp-connections=10000
+#fast-dns-retry=
+
+# cache
+cache-size=0
+no-negcache

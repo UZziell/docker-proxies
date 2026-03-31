@@ -5,7 +5,7 @@ services:
       context: .
       args:
         SERVER_OR_CLIENT: server
-    container_name: dnstt-server
+    # container_name: dnstt-server
     volumes:
       - ./data:/var/lib/dnstt
     environment:
@@ -13,7 +13,7 @@ services:
       DNSTT_PUBLIC_KEY_FILE: ${DNSTT_PUBLIC_KEY_FILE}
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    entrypoint: 
+    entrypoint:
       - "/bin/bash"
       - "-c"
       - |
@@ -40,7 +40,7 @@ services:
           -privkey-file ${DNSTT_PRIVATE_KEY_FILE} \
           -mtu ${DNSTT_MTU:-1024} \
           ${DNSTT_NAMESERVER} 127.0.0.1:${DNSTT_SERVER_TARGET_PORT}
-        
+
     restart: always
     # ports:
     #   - "53:5300/udp"
@@ -63,7 +63,7 @@ services:
       - ./data:/var/lib/dnstt
     environment:
       DNSTT_PUBLIC_KEY_FILE: ${DNSTT_PUBLIC_KEY_FILE}
-    entrypoint: 
+    entrypoint:
       - "/bin/bash"
       - "-c"
       - |
