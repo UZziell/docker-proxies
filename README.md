@@ -19,6 +19,8 @@ Below are the supported proxies, linked to their original authors or official re
 * [s-ui](https://github.com/alireza0/s-ui) – An advanced Web Panel • Built for SagerNet/Sing-Box
 * [sing-box](https://github.com/SagerNet/sing-box) –  The universal proxy platform
 * [x-ui](https://github.com/alireza0/x-ui) – Xray core panel
+* [slipstream-rust](https://github.com/Mygod/slipstream-rust) - High-performance multi-path covert channel over DNS in Rust with vibe coding
+* [dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html) - Dnsmasq provides network infrastructure for small networks (In this project it's used as a DNS router with tunnels based proxies)
 
 **Certbot** is also included to facilitate the automated generation and renewal of Let's Encrypt SSL/TLS certificates used by various proxies
 
