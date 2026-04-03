@@ -1,0 +1,48 @@
+services:
+  server:
+    # container_name: masterdnsvpn-server
+    image: masterdnsvpn-server
+    build:
+      context: .
+      args:
+        SERVER_OR_CLIENT: Server
+    volumes:
+      - ./data:/var/lib/masterdnsvpn
+      - ./server_config.toml:/etc/masterdnsvpn/server_config.toml
+    entrypoint:
+      - /usr/local/bin/masterdnsvpn-server
+      - -config
+      - /etc/masterdnsvpn/server_config.toml
+      - -encryption-key-file
+      - /var/lib/masterdnsvpn/encrypt_key.txt
+    restart: always
+    network_mode: host
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "1"
+
+  client:
+    # container_name: masterdnsvpn-client
+    image: masterdnsvpn-client
+    build:
+      context: .
+      args:
+        SERVER_OR_CLIENT: Client
+    volumes:
+      - ./data:/var/lib/masterdnsvpn
+      - ./client_config.toml:/etc/masterdnsvpn/client_config.toml
+    entrypoint:
+      - /usr/local/bin/masterdnsvpn-client
+      - -config
+      - /etc/masterdnsvpn/client_config.toml
+      - -resolvers
+      - /var/lib/masterdnsvpn/client_resolvers.txt
+    restart: always
+    network_mode: host
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "1"
