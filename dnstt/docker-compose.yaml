@@ -32,14 +32,14 @@ services:
 
         echo "Private key path: $DNSTT_PRIVATE_KEY_FILE"
         echo "Public key path: $DNSTT_PUBLIC_KEY_FILE"
-        echo "Public key(needed for client):"
+        echo "Public key(It should be present on client 'data/server.pub'):"
         cat "$DNSTT_PUBLIC_KEY_FILE"
 
         exec /usr/local/bin/dnstt-server \
           -udp :${DNSTT_PORT:-53} \
           -privkey-file ${DNSTT_PRIVATE_KEY_FILE} \
           -mtu ${DNSTT_MTU:-1024} \
-          ${DNSTT_NAMESERVER} 127.0.0.1:${DNSTT_SERVER_TARGET_PORT}
+          ${DNSTT_NAMESERVER:?ERROR} 127.0.0.1:${DNSTT_SERVER_UPSTREAM_PORT:?ERROR}
 
     restart: always
     # ports:
@@ -72,7 +72,7 @@ services:
         chmod 644 "$DNSTT_PUBLIC_KEY_FILE"
         chown -R dnstt:dnstt /var/lib/dnstt
         exec su-exec dnstt /usr/local/bin/dnstt-client \
-          -${DNSTT_CLIENT_MODE} ${DNSTT_CLIENT_RESOLVER_ADDRESS} \
+          -${DNSTT_CLIENT_MODE:?ERROR} ${DNSTT_CLIENT_RESOLVER_ADDRESS:?ERROR} \
           -pubkey-file ${DNSTT_PUBLIC_KEY_FILE} \
           -utls ${DNSTT_CLIENT_UTLS} \
           ${DNSTT_NAMESERVER} 127.0.0.1:${DNSTT_CLIENT_LISTEN_PORT}

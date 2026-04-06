@@ -5,14 +5,17 @@ listen-address=0.0.0.0
 bind-dynamic
 
 ## Upstream Rules ##
-# Slipstream-rust - Port 531
-server=/a.example.com/127.0.0.1#531
-# dnstt - Port 532
-server=/b.example.com/127.0.0.1#532
+# Slipstream-rust - Port 5301
+server=/a.example.com/127.0.0.1#5301
+server=/aa.example.com/127.0.0.1#5301
+# dnstt - Port 5302
+server=/b.example.com/127.0.0.1#5302
+# MasterDnsVPN - 5303
+server=/c.example.com/127.0.0.1#5303
+# varydns - 5304
+server=/d.example.com/127.0.0.1#5304
 # noizDNS(Slipnet) - Port 5300
-server=/c.example.com/127.0.0.1#5300
-#  MasterDnsVPN - 534
-server=/d.example.com/127.0.0.1#534
+server=/e.example.com/127.0.0.1#5300
 
 # General
 no-resolv

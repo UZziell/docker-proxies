@@ -13,7 +13,7 @@ services:
       - --dns-listen-port
       - ${SLIPSTREAM_PORT:-53}
       - --domain
-      - ${SLIPSTREAM_NAMESERVER}
+      - ${SLIPSTREAM_NAMESERVER:?ERROR}
       - --cert
       - /var/lib/slipstream/cert.pem
       - --key
@@ -21,7 +21,7 @@ services:
       - --max-connections
       - ${SLIPSTREAM_SERVER_MAX_CONNECTIOINS:-256}
       - --target-address
-      - 127.0.0.1:${SLIPSTREAM_SERVER_TARGET_PORT}
+      - 127.0.0.1:${SLIPSTREAM_SERVER_UPSTREAM_PORT:?ERROR}
     restart: always
     network_mode: host
     privileged: true
@@ -49,9 +49,9 @@ services:
       - --congestion-control
       - bbr
       - --domain
-      - ${SLIPSTREAM_NAMESERVER}
+      - ${SLIPSTREAM_NAMESERVER:?ERROR}
       - --resolver
-      - ${SLIPSTREAM_CLIENT_RESOLVER_ADDRESS}
+      - ${SLIPSTREAM_CLIENT_RESOLVER_ADDRESS:?ERROR}
     restart: always
     network_mode: host
     privileged: true

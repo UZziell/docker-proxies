@@ -18,7 +18,7 @@ curl -sSfL https://raw.githubusercontent.com/masterking32/MasterDnsVPN/refs/head
 Make the minimum configuration changes according to
 [Client configuration checklist](https://github.com/masterking32/MasterDnsVPN#section-32-quick-client-checklist-)
 
-As per the the documentation, in addition to configuration file, client needs a `client_resolvers.txt` that should be placed in the `data/client_resolvers.txt` directory.
+In addition to configuration file, [as per the the documentation](https://github.com/masterking32/MasterDnsVPN#section-31-important-project-files-), client needs a `client_resolvers.txt` that should be placed in the `data/client_resolvers.txt` directory.
 
 
 ### Running
@@ -26,7 +26,7 @@ As per the the documentation, in addition to configuration file, client needs a 
 ```bash
 docker compose up --build -d server
 ```
-When server is started for the first time, an encryption key is generated and saved to `data/encrypt_key.txt` file that should be used in the `client_config.toml`
+When server is started for the first time, an encryption key is generated and saved to `data/encrypt_key.txt` file that should be used in the `client_config.toml` for `ENCRYPTION_KEY`
 
 #### Client
 ```bash
