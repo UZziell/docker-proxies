@@ -1,0 +1,100 @@
+services:
+  server:
+    image: vaydns-server
+    build:
+      context: .
+      args:
+        SERVER_OR_CLIENT: server
+    volumes:
+      - ./data:/var/lib/vaydns
+    environment:
+      VAYDNS_PRIVATE_KEY_FILE: ${VAYDNS_PRIVATE_KEY_FILE}
+      VAYDNS_PUBLIC_KEY_FILE: ${VAYDNS_PUBLIC_KEY_FILE}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    entrypoint:
+      - "/bin/bash"
+      - "-c"
+      - |
+        set -euo pipefail
+
+        if [[ -f "$VAYDNS_PRIVATE_KEY_FILE" && -f "$VAYDNS_PUBLIC_KEY_FILE" ]]; then
+          echo "Found existing key pair."
+        else
+          echo "No key pair found! Generating new one..."
+          /usr/local/bin/vaydns-server -gen-key -privkey-file "$VAYDNS_PRIVATE_KEY_FILE" -pubkey-file "$VAYDNS_PUBLIC_KEY_FILE"
+        fi
+
+        chmod 600 "$VAYDNS_PRIVATE_KEY_FILE"
+        chmod 644 "$VAYDNS_PUBLIC_KEY_FILE"
+        chown -R vaydns:vaydns /var/lib/vaydns
+
+        echo "Private key path: $VAYDNS_PRIVATE_KEY_FILE"
+        echo "Public key path: $VAYDNS_PUBLIC_KEY_FILE"
+        echo "Public key(needed for client):"
+        cat "$VAYDNS_PUBLIC_KEY_FILE"
+
+        exec /usr/local/bin/vaydns-server \
+          -udp ${VAYDNS_LISTEN_HOST}:${VAYDNS_LISTEN_PORT} \
+          -privkey-file ${VAYDNS_PRIVATE_KEY_FILE} \
+          -mtu ${VAYDNS_MTU:-1024} \
+          -record-type ${VAYDNS_RECORD_TYPE} \
+          -idle-timeout ${VAYDNS_IDLE_TIMEOUT} \
+          -keepalive ${VAYDNS_KEEPALIVE} \
+          -queue-size ${VAYDNS_QUEUE_SIZE} \
+          -kcp-window-size ${VAYDNS_KCP_WINDOW_SIZE} \
+          -upstream ${VAYDNS_UPSTREAM_HOST:?ERROR}:${VAYDNS_UPSTREAM_PORT:?ERROR} \
+          -domain ${VAYDNS_NAMESERVER:?ERROR}
+
+    restart: always
+    # ports:
+    #   - "53:5304/udp"
+    network_mode: host
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "1"
+
+  client:
+    image: vaydns-client
+    build:
+      context: .
+      args:
+        SERVER_OR_CLIENT: client
+        # IMAGE_REGISTRY: docker.arvancloud.ir/
+    container_name: vaydns-client
+    volumes:
+      - ./data:/var/lib/vaydns
+    environment:
+      VAYDNS_PUBLIC_KEY_FILE: ${VAYDNS_PUBLIC_KEY_FILE}
+    entrypoint:
+      - "/bin/bash"
+      - "-c"
+      - |
+        set -euo pipefail
+        echo "vaydns Client Listen Address: ${VAYDNS_CLIENT_LISTEN_HOST}:${VAYDNS_CLIENT_LISTEN_PORT}"
+
+        chmod 644 "$VAYDNS_PUBLIC_KEY_FILE"
+        chown -R vaydns:vaydns /var/lib/vaydns
+        exec su-exec vaydns /usr/local/bin/vaydns-client \
+          -${VAYDNS_CLIENT_MODE:?ERROR} ${VAYDNS_CLIENT_RESOLVER_ADDRESS:?ERROR} \
+          -pubkey-file ${VAYDNS_PUBLIC_KEY_FILE} \
+          -utls ${VAYDNS_CLIENT_UTLS} \
+          -record-type ${VAYDNS_RECORD_TYPE} \
+          -idle-timeout ${VAYDNS_IDLE_TIMEOUT} \
+          -keepalive ${VAYDNS_KEEPALIVE} \
+          -queue-size ${VAYDNS_QUEUE_SIZE} \
+          -kcp-window-size ${VAYDNS_KCP_WINDOW_SIZE} \
+          -listen ${VAYDNS_CLIENT_LISTEN_HOST}:${VAYDNS_CLIENT_LISTEN_PORT} \
+          -domain ${VAYDNS_NAMESERVER:?ERROR}
+
+    restart: always
+    # ports:
+    #   - 127.0.0.1:${VAYDNS_CLIENT_LISTEN_PORT}:${VAYDNS_CLIENT_LISTEN_PORT}
+    network_mode: host
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "1"
