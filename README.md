@@ -1,8 +1,4 @@
 
-
-**Cerbot** is also included to provide LetsEncrypt SSL/TLS certificates
-
-
 # Docker Proxies
 
 A curated collection of Docker Compose configurations designed for the easy deployment of various censorship bypass services.
