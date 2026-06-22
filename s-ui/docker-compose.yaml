@@ -1,6 +1,6 @@
 services:
   s-ui:
-    image: ghcr.io/alireza0/s-ui:${IMAGE_TAG:-v1.4.1}
+    image: alireza7/s-ui:${IMAGE_TAG:-v1.4.2}
     environment:
       - SUI_LOG_LEVEL=${SUI_LOG_LEVEL:-info}
       - SUI_DEBUG=${SUI_DEBUG:-false}
