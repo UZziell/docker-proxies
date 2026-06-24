@@ -29,6 +29,6 @@
 		header_up Host {$NAIVEPROXY_DECODY_DOMAIN}
 		header_up X-Forwarded-For {http.request.remote}
 		header_up X-Forwarded-Proto {http.request.scheme}
-		header_down Location {$NAIVEPROXY_DECODY_URL} https://{$NAIVEPROXY_DOMAIN}
+		header_down Location {$NAIVEPROXY_DECODY_URL} https://{host}
 	}
 }
