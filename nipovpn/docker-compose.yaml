@@ -1,0 +1,41 @@
+services:
+  server:
+    image: nipovpn-server
+    build:
+      context: .
+      args:
+        NIPOVPN_VERSION: ${NIPOVPN_VERSION:-1.1.59}
+    volumes:
+      - ${CONFIG_FILE:-./config.yaml}:/etc/nipovpn/config.yaml
+      - "../certbot/certbot-etc/:/etc/certbot"
+    entrypoint:
+      - /usr/bin/nipovpn
+      - server
+      - /etc/nipovpn/config.yaml
+    restart: always
+    network_mode: host
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "1"
+
+  client:
+    image: nipovp-client
+    build:
+      context: .
+      args:
+        NIPOVPN_VERSION: ${NIPOVPN_VERSION:-1.1.59}
+    volumes:
+      - ${CONFIG_FILE:-./config.yaml}:/etc/nipovpn/config.yaml
+    entrypoint:
+      - /usr/bin/nipovpn
+      - agent
+      - /etc/nipovpn/config.yaml
+    restart: always
+    network_mode: host
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "1"

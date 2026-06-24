@@ -26,6 +26,8 @@ Below are the supported proxies, linked to their original authors or official re
 
 * [**Certbot**](https://github.com/certbot/certbot) is also included to facilitate the automated generation and renewal of Let's Encrypt SSL/TLS certificates used by various proxies
 
+* [nipovpn](https://github.com/MortezaBashsiz/nipovpn) – Powerfull proxy
+
 ## Requirements
 *   **Docker** version 27.5.1 or higher.
 
