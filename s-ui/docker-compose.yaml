@@ -1,6 +1,6 @@
 services:
   s-ui:
-    image: alireza7/s-ui:${IMAGE_TAG:-v1.4.2}
+    image: alireza7/s-ui:${IMAGE_TAG:-v1.5.3}
     environment:
       - SUI_LOG_LEVEL=${SUI_LOG_LEVEL:-info}
       - SUI_DEBUG=${SUI_DEBUG:-false}

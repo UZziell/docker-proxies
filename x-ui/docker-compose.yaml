@@ -1,6 +1,6 @@
 services:
   x-ui:
-    image: ghcr.io/alireza0/x-ui:v1.9.1
+    image: ghcr.io/alireza0/x-ui:v1.11.3
     environment:
       XUI_LOG_LEVEL: info
       XUI_DEBUG: "false"
