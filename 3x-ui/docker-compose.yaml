@@ -1,6 +1,6 @@
 services:
   3x-ui:
-    image: ghcr.io/mhsanaei/3x-ui:${IMAGE_TAG:-v3.4.2}
+    image: ghcr.io/mhsanaei/3x-ui:${IMAGE_TAG:-v3.6.0}
     restart: unless-stopped
     volumes:
       - ./data/db-${NODE_NAME:-default}:/etc/x-ui/db
